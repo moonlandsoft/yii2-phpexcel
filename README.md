@@ -28,7 +28,8 @@ Usage
 Once the extension is installed, simply use it in your code by  :
 
 ```php
-<?= \moonland\phpexcel\Excel::widget([
+<?php
+\moonland\phpexcel\Excel::widget([
 	'models' => $allModels,
 	'columns' => ['column1','column2','column3'],
 	'header' => ['column1' => 'Header Column 1','column2' => 'Header Column 2', 'column3' => 'Header Column 3'],
