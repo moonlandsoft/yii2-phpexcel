@@ -1,0 +1,22 @@
+{
+    "name": "moonlandsoft/yii2-phpexcel",
+    "description": "Exporting PHP to Excel",
+    "type": "yii2-extension",
+    "keywords": ["yii2","extension","excel","xls","export"],
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Moh Khoirul Anam",
+            "email": "moh.khoirul.anaam@gmail.com"
+        }
+    ],
+    "require": {
+        "yiisoft/yii2": "*",
+        "phpoffice/phpexcel": "*"
+    },
+    "autoload": {
+        "psr-4": {
+            "moonland\\phpexcel\\": ""
+        }
+    }
+}
