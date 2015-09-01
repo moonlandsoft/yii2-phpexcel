@@ -2,23 +2,52 @@
 
 namespace moonland\phpexcel;
 
+use yii\helpers\ArrayHelper;
+
 /**
- * Excel Widget for generate Excel File.
+ * Excel Widget for generate Excel File or for load Excel File.
  * 
  * Usage
  * -----
  * 
  * Once the extension is installed, simply use it in your code by  :
  * 
- * ```php
- * <?php 
- *  \moonland\phpexcel\Excel::widget([
+ * ~~~
+ * 
+ * 
+ * \moonland\phpexcel\Excel::widget([
  * 		'models' => $allModels,
  * 		'columns' => ['column1','column2','column3'],
  * 		//without header working, because the header will be get label from attribute label.
  * 		'header' => ['column1' => 'Header Column 1','column2' => 'Header Column 2', 'column3' => 'Header Column 3'],
- * 	]); ?>
- * ```
+ * ]);
+ * 
+ * ~~~
+ * 
+ * 
+ * Exporting data into an excel file.
+ * 
+ * ~~~
+ * 
+ * \moonland\phpexcel\Excel::export([
+ * 		'models' => $allModels,
+ * 		'columns' => ['column1','column2','column3'],
+ * 		//without header working, because the header will be get label from attribute label.
+ * 		'header' => ['column1' => 'Header Column 1','column2' => 'Header Column 2', 'column3' => 'Header Column 3'],
+ * ]);
+ * 
+ * ~~~
+ * 
+ * 
+ * Import file excel and return into an array.
+ * 
+ * ~~~
+ * 
+ * $data = \moonland\phpexcel\Excel::import($fileName, $config); // $config is an optional
+ * 
+ * $data = \moonland\phpexcel\Excel::import($fileName, ['setFirstRecordAsKeys' => true]);
+ * 
+ * ~~~
  * 
  * @author Moh Khoirul Anam <moh.khoirul.anaam@gmail.com>
  * @copyright 2014
@@ -26,51 +55,46 @@ namespace moonland\phpexcel;
  */
 class Excel extends \yii\base\Widget
 {
-	private $_sheet;
-	private static $_sheets;
-	private $_activeSheet;
-	private static $_activeSheets;
-	
+	/**
+	 * @var string mode is an export mode or import mode. valid value are 'export' and 'import'.
+	 */
+	public $mode = 'export';
+	/**
+	 * @var \yii\base\Model with much data.
+	 */
 	public $models;
+	/**
+	 * @var array columns data from models
+	 */
 	public $columns;
+	/**
+	 * @var array header to set the header column on first line
+	 */
 	public $headers;
+	/**
+	 * @var string name for file name to export or save.
+	 */
 	public $fileName;
+	/**
+	 * @var string save path is a directory to save the file or you can blank this to set the file as attachment.
+	 */
 	public $savePath;
+	/**
+	 * @var string format for excel to export
+	 */
 	public $format = 'Excel2007';
+	/**
+	 * @var boolean to set the title column on the first line.
+	 */
 	public $setFirstTitle = true;
+	/**
+	 * @var boolean to set the file excel to download mode.
+	 */
 	public $asAttachment = true;
-	
-	public function getSheet()
-	{
-		if (!isset($this->_sheet)) {
-			$this->_sheet = new \PHPExcel();
-		}
-		return $this->_sheet;
-	}
-	
-	public static function sheet()
-	{
-		if (!isset(self::$_sheets)) {
-			self::$_sheets = new \PHPExcel();
-		}
-		return self::$_sheets;
-	}
-	
-	public function getActiveSheet()
-	{
-		if (!isset($this->_activeSheet)) {
-			$this->_activeSheet = $this->sheet()->getActiveSheet();
-		}
-		return $this->_activeSheet;
-	}
-	
-	public static function activeSheet()
-	{
-		if (!isset(self::$_activeSheets)) {
-			self::$_activeSheets = self::sheet()->getActiveSheet();
-		}
-		return self::$_activeSheets;
-	}
+	/**
+	 * @var boolean to set the first record on excel file to a keys of array per line.
+	 */
+	public $setFistRecordAsKeys = true;
 	
 	/**
 	 * Setting data from models
@@ -131,6 +155,20 @@ class Excel extends \yii\base\Widget
 		}
 	}
 	
+	public function executeArrayLabel($sheetData)
+	{
+		$keys = ArrayHelper::remove($sheetData, '1');
+		
+		$new_data = [];
+		
+		foreach ($sheetData as $values)
+		{
+			$new_data[] = array_combine($keys, $values);
+		}
+		
+		return $new_data;
+	}
+	
 	/**
 	 * Setting header to download generated file xls
 	 */
@@ -159,7 +197,7 @@ class Excel extends \yii\base\Widget
 	/**
 	 * saving the xls file to download or to path
 	 */
-	public function save($sheet)
+	public function writeFile($sheet)
 	{
 		$objectwriter = \PHPExcel_IOFactory::createWriter($sheet, $this->format);
 		$path = 'php://output';
@@ -170,14 +208,77 @@ class Excel extends \yii\base\Widget
 		exit();
 	}
 	
+	/**
+	 * reading the xls file
+	 */
+	public function readFile()
+	{
+		$objectreader = \PHPExcel_IOFactory::createReader($this->format);
+		$objectPhpExcel = $objectreader->load($this->fileName);
+		
+		$sheetData = $objectPhpExcel->getActiveSheet()->toArray(null, true, true, true);
+		
+		if ($this->setFistRecordAsKeys) {
+			$sheetData = $this->executeArrayLabel($sheetData);
+		}
+		
+		return $sheetData;
+	}
+	
     public function run()
     {
-    	$sheet = new \PHPExcel();
-    	$activeSheet = $sheet->getActiveSheet();
-        $this->executeColumns($activeSheet);
-        if ($this->asAttachment) {
-        	$this->setHeaders();
-        }
-        $this->save($sheet);
+    	if ($this->mode == 'export') {
+	    	$sheet = new \PHPExcel();
+	    	$activeSheet = $sheet->getActiveSheet();
+	    	$this->executeColumns($activeSheet);
+	    	if ($this->asAttachment) {
+	    		$this->setHeaders();
+	    	}
+	    	$this->writeFile($sheet);
+    	} elseif ($this->mode == 'import') {
+    		return $this->readFile();
+    	}
+    }
+    
+    /**
+     * Exporting data into an excel file.
+     * 
+	 * ~~~
+	 * 
+	 * \moonland\phpexcel\Excel::export([
+	 * 		'models' => $allModels,
+	 * 		'columns' => ['column1','column2','column3'],
+	 * 		//without header working, because the header will be get label from attribute label.
+	 * 		'header' => ['column1' => 'Header Column 1','column2' => 'Header Column 2', 'column3' => 'Header Column 3'],
+	 * ]);
+	 * 
+	 * ~~~
+	 * 
+     * @param array $config
+     * @return string
+     */
+    public static function export($config=[])
+    {
+    	$config = ArrayHelper::merge(['mode' => 'export'], $config);
+    	return self::widget($config);
+    }
+    
+    /**
+     * Import file excel and return into an array.
+     * 
+	 * ~~~
+	 * 
+	 * $data = \moonland\phpexcel\Excel::import($fileName, ['setFirstRecordAsKeys' => true]);
+	 * 
+	 * ~~~
+	 * 
+     * @param string $fileName to load.
+     * @param array $config is a more configuration.
+     * @return string
+     */
+    public static function import($fileName, $config=[])
+    {
+    	$config = ArrayHelper::merge(['mode' => 'import', 'fileName' => $fileName], $config);
+    	return self::widget($config);
     }
 }
