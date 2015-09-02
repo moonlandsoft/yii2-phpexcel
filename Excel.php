@@ -60,6 +60,14 @@ class Excel extends \yii\base\Widget
 	 */
 	public $mode = 'export';
 	/**
+	 * @var boolean for set the export excel with multiple sheet.
+	 */
+	public $isMultipleSheet=false;
+	/**
+	 * @var array properties for set property on the excel object.
+	 */
+	public $properties;
+	/**
 	 * @var \yii\base\Model with much data.
 	 */
 	public $models;
@@ -99,16 +107,15 @@ class Excel extends \yii\base\Widget
 	/**
 	 * Setting data from models
 	 */
-	public function executeColumns(&$activeSheet = null)
+	public function executeColumns(&$activeSheet = null, $models, $columns = [], $headers = [])
 	{
 		if ($activeSheet == null) {
 			$activeSheet = $this->activeSheet;
 		}
-		$columns = $this->columns;
 		$hasHeader = false;
 		$row = 1;
 		$char = 26;
-		foreach ($this->models as $model) {
+		foreach ($models as $model) {
 			if ($this->setFirstTitle && !$hasHeader) {
 				$isPlus = false;
 				$colplus = 0;
@@ -124,8 +131,8 @@ class Excel extends \yii\base\Widget
 						$col .= chr(64+$colplus);
 					}
 					$col .= chr(64+$colnum);
-					if (isset($this->headers[$column])) {
-						$activeSheet->setCellValue($col.$row,$this->headers[$column]);
+					if (isset($headers[$column])) {
+						$activeSheet->setCellValue($col.$row,$headers[$column]);
 					} else {
 						$activeSheet->setCellValue($col.$row,$model->getAttributeLabel($column));
 					}
@@ -155,6 +162,11 @@ class Excel extends \yii\base\Widget
 		}
 	}
 	
+	/**
+	 * Setting label or keys on every record if setFirstRecordAsKeys is true.
+	 * @param array $sheetData
+	 * @return multitype:multitype:array
+	 */
 	public function executeArrayLabel($sheetData)
 	{
 		$keys = ArrayHelper::remove($sheetData, '1');
@@ -195,6 +207,20 @@ class Excel extends \yii\base\Widget
 	}
 	
 	/**
+	 * Setting properties for excel file
+	 * @param PHPExcel $objectExcel
+	 * @param array $properties
+	 */
+	public function properties(&$objectExcel, $properties = [])
+	{
+		foreach ($properties as $key => $value)
+		{
+			$keyname = "set" . ucfirst($key);
+			$objectExcel->getProperties()->{$keyname}($value);
+		}
+	}
+	
+	/**
 	 * saving the xls file to download or to path
 	 */
 	public function writeFile($sheet)
@@ -213,12 +239,12 @@ class Excel extends \yii\base\Widget
 	/**
 	 * reading the xls file
 	 */
-	public function readFile()
+	public function readFile($fileName)
 	{
 		if (!isset($this->format))
-			$this->format = PHPExcel_IOFactory::identify($this->fileName);
+			$this->format = PHPExcel_IOFactory::identify($fileName);
 		$objectreader = \PHPExcel_IOFactory::createReader($this->format);
-		$objectPhpExcel = $objectreader->load($this->fileName);
+		$objectPhpExcel = $objectreader->load($fileName);
 		
 		$sheetCount = $objectPhpExcel->getSheetCount();
 		
@@ -242,18 +268,50 @@ class Excel extends \yii\base\Widget
 		return $sheetDatas;
 	}
 	
+	/**
+	 * (non-PHPdoc)
+	 * @see \yii\base\Widget::run()
+	 */
     public function run()
     {
-    	if ($this->mode == 'export') {
+    	if ($this->mode == 'export') 
+    	{
 	    	$sheet = new \PHPExcel();
-	    	$activeSheet = $sheet->getActiveSheet();
-	    	$this->executeColumns($activeSheet);
+	    	
+	    	if (isset($this->properties))
+	    	{
+	    		$this->properties($sheet, $this->properties);
+	    	}
+	    	
+	    	if ($this->isMultipleSheet) {
+	    		$index = 0;
+	    		foreach ($this->models as $title => $models) {
+	    			$sheet->createSheet($index);
+	    			$sheet->getSheet($index)->setTitle($title);
+	    			$columns = isset($this->columns[$title]) ? $this->columns[$title] : [];
+	    			$headers = isset($this->headers[$title]) ? $this->headers[$title] : [];
+	    			$this->executeColumns($sheet->getSheet($index), $models, $columns, $headers);
+	    			$index++;
+	    		}
+	    	} else {
+	    		$this->executeColumns($sheet->getActiveSheet(), $this->columns, $this->headers);
+	    	}
+	    	
 	    	if ($this->asAttachment) {
 	    		$this->setHeaders();
 	    	}
 	    	$this->writeFile($sheet);
-    	} elseif ($this->mode == 'import') {
-    		return $this->readFile();
+    	} 
+    	elseif ($this->mode == 'import') 
+    	{
+    		if (is_array($this->fileName)) {
+    			$datas = [];
+    			foreach ($this->fileName as $filename) {
+    				$datas[] = $this->readFile($filename);
+    			}
+    		} else {
+    			return $this->readFile($this->fileName);
+    		}
     	}
     }
     
