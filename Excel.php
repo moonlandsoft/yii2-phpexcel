@@ -80,9 +80,9 @@ class Excel extends \yii\base\Widget
 	 */
 	public $savePath;
 	/**
-	 * @var string format for excel to export
+	 * @var string format for excel to export. Valid value are 'Excel5','Excel2007','Excel2003XML','00Calc','Gnumeric'.
 	 */
-	public $format = 'Excel2007';
+	public $format;
 	/**
 	 * @var boolean to set the title column on the first line.
 	 */
@@ -199,6 +199,8 @@ class Excel extends \yii\base\Widget
 	 */
 	public function writeFile($sheet)
 	{
+		if (!isset($this->format))
+			$this->format = 'Excel2007';
 		$objectwriter = \PHPExcel_IOFactory::createWriter($sheet, $this->format);
 		$path = 'php://output';
 		if (isset($this->savePath) && $this->savePath != null) {
@@ -213,16 +215,31 @@ class Excel extends \yii\base\Widget
 	 */
 	public function readFile()
 	{
+		if (!isset($this->format))
+			$this->format = PHPExcel_IOFactory::identify($this->fileName);
 		$objectreader = \PHPExcel_IOFactory::createReader($this->format);
 		$objectPhpExcel = $objectreader->load($this->fileName);
 		
-		$sheetData = $objectPhpExcel->getActiveSheet()->toArray(null, true, true, true);
+		$sheetCount = $objectPhpExcel->getSheetCount();
 		
-		if ($this->setFistRecordAsKeys) {
-			$sheetData = $this->executeArrayLabel($sheetData);
+		$sheetDatas = [];
+		
+		if ($sheetCount > 1) {
+			foreach ($objectPhpExcel->getSheetNames() as $sheetIndex => $sheetName) {
+				$objectPhpExcel->setActiveSheetIndexByName($sheetName);
+				$sheetDatas[$sheetIndex] = $objectPhpExcel->getActiveSheet()->toArray(null, true, true, true);
+				if ($this->setFistRecordAsKeys) {
+					$sheetDatas[$sheetIndex] = $this->executeArrayLabel($sheetDatas[$sheetIndex]);
+				}
+			}
+		} else {
+			$sheetDatas = $objectPhpExcel->getActiveSheet()->toArray(null, true, true, true);
+			if ($this->setFistRecordAsKeys) {
+				$sheetDatas = $this->executeArrayLabel($sheetDatas);
+			}
 		}
 		
-		return $sheetData;
+		return $sheetDatas;
 	}
 	
     public function run()
