@@ -3,6 +3,7 @@
 namespace moonland\phpexcel;
 
 use yii\helpers\ArrayHelper;
+use yii\base\InvalidConfigException;
 
 /**
  * Excel Widget for generate Excel File or for load Excel File.
@@ -190,7 +191,7 @@ class Excel extends \yii\base\Widget
 	/**
 	 * @var boolean for set the export excel with multiple sheet.
 	 */
-	public $isMultipleSheet=false;
+	public $isMultipleSheet = false;
 	/**
 	 * @var array properties for set property on the excel object.
 	 */
@@ -233,7 +234,7 @@ class Excel extends \yii\base\Widget
 	 * @var boolean to set the first record on excel file to a keys of array per line. 
 	 * If you want to set the keys of record column with first record, if it not set, the header with use the alphabet column on excel.
 	 */
-	public $setFistRecordAsKeys = true;
+	public $setFirstRecordAsKeys = true;
 	/**
 	 * @var boolean to set the sheet index by sheet name or array result if the sheet not only one.
 	 */
@@ -246,6 +247,14 @@ class Excel extends \yii\base\Widget
 	 * @var boolean to set the import data will return as array.
 	 */
 	public $asArray;
+	/**
+	 * @var array to unread record by index number.
+	 */
+	public $leaveRecordByIndex = [];
+	/**
+	 * @var array to read record by index, other will leave.
+	 */
+	public $getOnlyRecordByIndex = [];
 	
 	/**
 	 * Setting data from models
@@ -328,6 +337,42 @@ class Excel extends \yii\base\Widget
 	}
 	
 	/**
+	 * Leave record with same index number.
+	 * @param array $sheetData
+	 * @param array $index
+	 * @return array
+	 */
+	public function executeLeaveRecords($sheetData = [], $index = [])
+	{
+		foreach ($sheetData as $key => $data)
+		{
+			if (in_array($key, $index))
+			{
+				unset($sheetData[$key]);
+			}
+		}
+		return $sheetData;
+	}
+	
+	/**
+	 * Read record with same index number.
+	 * @param array $sheetData
+	 * @param array $index
+	 * @return array
+	 */
+	public function executeGetOnlyRecords($sheetData = [], $index = [])
+	{
+		foreach ($sheetData as $key => $data)
+		{
+			if (!in_array($key, $index))
+			{
+				unset($sheetData[$key]);
+			}
+		}
+		return $sheetData;
+	}
+	
+	/**
 	 * Setting header to download generated file xls
 	 */
 	public function setHeaders()
@@ -401,8 +446,14 @@ class Excel extends \yii\base\Widget
 				$objectPhpExcel->setActiveSheetIndexByName($sheetName);
 				$indexed = $this->setIndexSheetByName==true ? $sheetName : $sheetIndex;
 				$sheetDatas[$indexed] = $objectPhpExcel->getActiveSheet()->toArray(null, true, true, true);
-				if ($this->setFistRecordAsKeys) {
+				if ($this->setFirstRecordAsKeys) {
 					$sheetDatas[$indexed] = $this->executeArrayLabel($sheetDatas[$indexed]);
+				}
+				if (!empty($this->getOnlyRecordByIndex) && isset($this->getOnlyRecordByIndex[$indexed]) && is_array($this->getOnlyRecordByIndex[$indexed])) {
+					$sheetDatas = $this->executeGetOnlyRecords($sheetDatas, $this->getOnlyRecordByIndex[$indexed]);
+				}
+				if (!empty($this->leaveRecordByIndex) && isset($this->leaveRecordByIndex[$indexed]) && is_array($this->leaveRecordByIndex[$indexed])) {
+					$sheetDatas[$indexed] = $this->executeLeaveRecords($sheetDatas[$indexed], $this->leaveRecordByIndex[$indexed]);
 				}
 			}
 			if (isset($this->getOnlySheet) && $this->getOnlySheet != null) {
@@ -411,8 +462,14 @@ class Excel extends \yii\base\Widget
 			}
 		} else {
 			$sheetDatas = $objectPhpExcel->getActiveSheet()->toArray(null, true, true, true);
-			if ($this->setFistRecordAsKeys) {
+			if ($this->setFirstRecordAsKeys) {
 				$sheetDatas = $this->executeArrayLabel($sheetDatas);
+			}
+			if (!empty($this->getOnlyRecordByIndex)) {
+				$sheetDatas = $this->executeGetOnlyRecords($sheetDatas, $this->getOnlyRecordByIndex);
+			}
+			if (!empty($this->leaveRecordByIndex)) {
+				$sheetDatas = $this->executeLeaveRecords($sheetDatas, $this->leaveRecordByIndex);
 			}
 		}
 		
@@ -429,6 +486,9 @@ class Excel extends \yii\base\Widget
     	{
 	    	$sheet = new \PHPExcel();
 	    	
+	    	if (!isset($this->models))
+	    		throw new InvalidConfigException('Config models must be set');
+	    	
 	    	if (isset($this->properties))
 	    	{
 	    		$this->properties($sheet, $this->properties);
@@ -436,16 +496,19 @@ class Excel extends \yii\base\Widget
 	    	
 	    	if ($this->isMultipleSheet) {
 	    		$index = 0;
+	    		$worksheet = [];
 	    		foreach ($this->models as $title => $models) {
 	    			$sheet->createSheet($index);
 	    			$sheet->getSheet($index)->setTitle($title);
+	    			$worksheet[$index] = $sheet->getSheet($index);
 	    			$columns = isset($this->columns[$title]) ? $this->columns[$title] : [];
 	    			$headers = isset($this->headers[$title]) ? $this->headers[$title] : [];
-	    			$this->executeColumns($sheet->getSheet($index), $models, $columns, $headers);
+	    			$this->executeColumns($worksheet[$index], $models, $columns, $headers);
 	    			$index++;
 	    		}
 	    	} else {
-	    		$this->executeColumns($sheet->getActiveSheet(), $this->columns, $this->headers);
+	    		$worksheet = $sheet->getActiveSheet();
+	    		$this->executeColumns($worksheet, $this->models, isset($this->columns) ? $this->columns : [], isset($this->headers) ? $this->headers : []);
 	    	}
 	    	
 	    	if ($this->asAttachment) {
@@ -460,6 +523,7 @@ class Excel extends \yii\base\Widget
     			foreach ($this->fileName as $key => $filename) {
     				$datas[$key] = $this->readFile($filename);
     			}
+    			return $datas;
     		} else {
     			return $this->readFile($this->fileName);
     		}
@@ -498,7 +562,7 @@ class Excel extends \yii\base\Widget
 	 * 
 	 * ~~~
 	 * 
-     * @param string $fileName to load.
+     * @param string!array $fileName to load.
      * @param array $config is a more configuration.
      * @return string
      */
@@ -508,6 +572,10 @@ class Excel extends \yii\base\Widget
     	return self::widget($config);
     }
     
+    /**
+     * @param array $config
+     * @return string
+     */
     public static function widget($config = [])
     {
     	if ($config['mode'] == 'import' && !isset($config['asArray'])) {
