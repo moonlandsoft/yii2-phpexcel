@@ -24,7 +24,7 @@ string|array `$fileName` is a name for file name to export or import. Multiple f
 
 string `$savePath` is a directory to save the file or you can blank this to set the file as attachment.  
 
-string `$format` for excel to export. Valid value are 'Excel5','Excel2007','Excel2003XML','00Calc','Gnumeric'.  
+string `$format` for excel to export. Valid value are 'Excel5', 'Excel2007', 'Excel2003XML', '00Calc', 'Gnumeric'.  
 
 boolean `$setFirstTitle` to set the title column on the first line. The columns will have a header on the first line.  
 
@@ -174,8 +174,8 @@ $data = \moonland\phpexcel\Excel::import([
 
 Result example from the code on the top :
 
-```php
-<?php
+```
+
 // only one sheet or specified sheet.
 Array([0] => Array([name] => Anam, [email] => moh.khoirul.anaam@gmail.com, [framework interest] => Yii2), [1] => Array([name] => Example, [email] => example@moonlandsoft.com, [framework interest] => Yii2));
 
