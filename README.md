@@ -64,6 +64,8 @@ to the require section of your `composer.json` file.
 Usage 
 -----
 
+## Exporting Data
+
 Exporting data into an excel file.
 
 
@@ -128,6 +130,43 @@ Exporting data into an excel file.
 ]);
 
 ```
+
+New Feature for exporting data, you can use this if you familiar yii gridview. 
+That is same with gridview data column.
+Columns in array mode valid params are 'attribute', 'header', 'format', 'value', and footer (TODO).
+Columns in string mode valid layout are 'attribute:format:header:footer(TODO)'.
+  
+```php
+<?php
+  
+\moonland\phpexcel\Excel::export([
+   	'models' => Post::find()->all(),
+      	'columns' => [
+      		'author.name:text:Author Name',
+      		[
+      				'attribute' => 'content',
+      				'header' => 'Content Post',
+      				'format' => 'text',
+      				'value' => function($model) {
+      					return ExampleClass::removeText('example', $model->content);
+      				},
+      		],
+      		'like_it:text:Reader like this content',
+      		'created_at:datetime',
+      		[
+      				'attribute' => 'updated_at',
+      				'format' => 'date',
+      		],
+      	],
+      	'headers' => [
+     		'created_at' => 'Date Created Content',
+		],
+]);
+	  
+```
+
+
+## Importing Data
 
 Import file excel and return into an array.
 
@@ -197,3 +236,4 @@ Array([file1] => Array([Sheet1] => Array([0] => Array([name] => Anam, [email] =>
 
 TODO
 ----
+- Adding footer params for columns in exporting data.

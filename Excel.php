@@ -4,6 +4,8 @@ namespace moonland\phpexcel;
 
 use yii\helpers\ArrayHelper;
 use yii\base\InvalidConfigException;
+use yii\base\InvalidParamException;
+use yii\i18n\Formatter;
 
 /**
  * Excel Widget for generate Excel File or for load Excel File.
@@ -72,6 +74,39 @@ use yii\base\InvalidConfigException;
  * 			'sheet1' => ['column1' => 'Header Column 1','column2' => 'Header Column 2', 'column3' => 'Header Column 3'], 
  * 			'sheet2' => ['column1' => 'Header Column 1','column2' => 'Header Column 2', 'column3' => 'Header Column 3'], 
  * 			'sheet3' => ['column1' => 'Header Column 1','column2' => 'Header Column 2', 'column3' => 'Header Column 3']
+ * 		],
+ * ]);
+ * 
+ * ~~~
+ * 
+ * New Feature for exporting data, you can use this if you familiar yii gridview. 
+ * That is same with gridview data column.
+ * Columns in array mode valid params are 'attribute', 'header', 'format', 'value', and footer (TODO).
+ * Columns in string mode valid layout are 'attribute:format:header:footer(TODO)'.
+ * 
+ * ~~~
+ * 
+ * \moonland\phpexcel\Excel::export([
+ *  	'models' => Post::find()->all(),
+ *     	'columns' => [
+ *     		'author.name:text:Author Name',
+ *     		[
+ *     				'attribute' => 'content',
+ *     				'header' => 'Content Post',
+ *     				'format' => 'text',
+ *     				'value' => function($model) {
+ *     					return ExampleClass::removeText('example', $model->content);
+ *     				},
+ *     		],
+ *     		'like_it:text:Reader like this content',
+ *     		'created_at:datetime',
+ *     		[
+ *     				'attribute' => 'updated_at',
+ *     				'format' => 'date',
+ *     		],
+ *     	],
+ *     	'headers' => [
+ *     		'created_at' => 'Date Created Content',
  * 		],
  * ]);
  * 
@@ -255,6 +290,30 @@ class Excel extends \yii\base\Widget
 	 * @var array to read record by index, other will leave.
 	 */
 	public $getOnlyRecordByIndex = [];
+
+	/**
+	 * @var array|Formatter the formatter used to format model attribute values into displayable texts.
+	 * This can be either an instance of [[Formatter]] or an configuration array for creating the [[Formatter]]
+	 * instance. If this property is not set, the "formatter" application component will be used.
+	 */
+	public $formatter;
+	
+	/**
+	 * (non-PHPdoc)
+	 * @see \yii\base\Object::init()
+	 */
+	public function init()
+	{
+		parent::init();
+		if ($this->formatter == null) {
+			$this->formatter = \Yii::$app->getFormatter();
+		} elseif (is_array($this->formatter)) {
+			$this->formatter = \Yii::createObject($this->formatter);
+		}
+		if (!$this->formatter instanceof Formatter) {
+			throw new InvalidConfigException('The "formatter" property must be either a Format object or a configuration array.');
+		}
+	}
 	
 	/**
 	 * Setting data from models
@@ -286,11 +345,19 @@ class Excel extends \yii\base\Widget
 						$col .= chr(64+$colplus);
 					}
 					$col .= chr(64+$colnum);
-					if (isset($headers[$column])) {
-						$activeSheet->setCellValue($col.$row,$headers[$column]);
+					$header = '';
+					if (is_array($column)) {
+						if (isset($column['header'])) {
+							$header = $column['header'];
+						} elseif (isset($column['attribute']) && isset($headers[$column['attribute']])) {
+							$header = $headers[$column['attribute']];
+						} elseif (isset($column['attribute'])) {
+							$header = $model->getAttributeLabel($column['attribute']);
+						}
 					} else {
-						$activeSheet->setCellValue($col.$row,$model->getAttributeLabel($column));
+						$header = $model->getAttributeLabel($column);
 					}
+					$activeSheet->setCellValue($col.$row,$header);
 					$colnum++;
 				}
 				$hasHeader=true;
@@ -310,7 +377,12 @@ class Excel extends \yii\base\Widget
 					$col .= chr(64+$colplus);
 				}
 				$col .= chr(64+$colnum);
-				$activeSheet->setCellValue($col.$row,$model->{$column});
+				if (is_array($column)) {
+					$column_value = $this->executeGetColumnData($model, $column);
+				} else {
+					$column_value = $this->executeGetColumnData($model, ['attribute' => $column]);
+				}
+				$activeSheet->setCellValue($col.$row,$column_value);
 				$colnum++;
 			}
 			$row++;
@@ -370,6 +442,77 @@ class Excel extends \yii\base\Widget
 			}
 		}
 		return $sheetData;
+	}
+	
+	/**
+	 * Getting column value.
+	 * @param Model $model
+	 * @param array $params
+	 * @return Ambigous <NULL, string, mixed>
+	 */
+	public function executeGetColumnData($model, $params = [])
+	{
+		$value = null;
+		if (isset($params['value']) && $params['value'] !== null) {
+			if (is_string($params['value'])) {
+				$value = ArrayHelper::getValue($model, $params['value']);
+			} else {
+				$value = call_user_func($params['value'], $model, $this);
+			}
+		} elseif (isset($params['attribute']) && $params['attribute'] !== null) {
+			$value = ArrayHelper::getValue($model, $params['attribute']);
+		}
+		
+		if (isset($params['format']) && $params['format'] != null)
+			$value = $this->formatter()->format($value, $params['format']);
+		
+		return $value;
+	}
+	
+	/**
+	 * Populating columns for checking the column is string or array. if is string this will be checking have a formatter or header.
+	 * @param array $columns
+	 * @throws InvalidParamException
+	 * @return multitype:multitype:array
+	 */
+	public function populateColumns($columns = [])
+	{
+		$_columns = [];
+		foreach ($columns as $key => $value)
+		{
+			if (is_string($value))
+			{
+				$value_log = explode(':', $value);
+				$_columns[$key] = ['attribute' => $value_log[0]];
+				
+				if (isset($value_log[1]) && $value_log[1] !== null) {
+					$_columns[$key]['format'] = $value_log[1];
+				}
+				
+				if (isset($value_log[2]) && $value_log[2] !== null) {
+					$_columns[$key]['header'] = $value_log[2];
+				}
+			} elseif (is_array($value)) {
+				if (!isset($value['attribute']) && !isset($value['value'])) {
+					throw new InvalidParamException('Attribute or Value must be defined.');
+				}
+				$_columns[$key] = $value;
+			}
+		}
+		
+		return $_columns;
+	}
+	
+	/**
+	 * Formatter for i18n.
+	 * @return Formatter
+	 */
+	public function formatter()
+	{
+		if (!isset($this->formatter))
+			$this->formatter = \Yii::$app->getFormatter();
+		
+		return $this->formatter;
 	}
 	
 	/**
@@ -480,10 +623,10 @@ class Excel extends \yii\base\Widget
 	 * (non-PHPdoc)
 	 * @see \yii\base\Widget::run()
 	 */
-    public function run()
-    {
-    	if ($this->mode == 'export') 
-    	{
+	public function run()
+	{
+		if ($this->mode == 'export') 
+		{
 	    	$sheet = new \PHPExcel();
 	    	
 	    	if (!isset($this->models))
@@ -503,36 +646,36 @@ class Excel extends \yii\base\Widget
 	    			$worksheet[$index] = $sheet->getSheet($index);
 	    			$columns = isset($this->columns[$title]) ? $this->columns[$title] : [];
 	    			$headers = isset($this->headers[$title]) ? $this->headers[$title] : [];
-	    			$this->executeColumns($worksheet[$index], $models, $columns, $headers);
+	    			$this->executeColumns($worksheet[$index], $models, $this->populateColumns($columns), $headers);
 	    			$index++;
 	    		}
 	    	} else {
 	    		$worksheet = $sheet->getActiveSheet();
-	    		$this->executeColumns($worksheet, $this->models, isset($this->columns) ? $this->columns : [], isset($this->headers) ? $this->headers : []);
+	    		$this->executeColumns($worksheet, $this->models, isset($this->columns) ? $this->populateColumns($this->columns) : [], isset($this->headers) ? $this->headers : []);
 	    	}
 	    	
 	    	if ($this->asAttachment) {
 	    		$this->setHeaders();
 	    	}
 	    	$this->writeFile($sheet);
-    	} 
-    	elseif ($this->mode == 'import') 
-    	{
-    		if (is_array($this->fileName)) {
-    			$datas = [];
-    			foreach ($this->fileName as $key => $filename) {
-    				$datas[$key] = $this->readFile($filename);
-    			}
-    			return $datas;
-    		} else {
-    			return $this->readFile($this->fileName);
-    		}
-    	}
-    }
-    
-    /**
-     * Exporting data into an excel file.
-     * 
+		} 
+		elseif ($this->mode == 'import') 
+		{
+			if (is_array($this->fileName)) {
+				$datas = [];
+				foreach ($this->fileName as $key => $filename) {
+					$datas[$key] = $this->readFile($filename);
+				}
+				return $datas;
+			} else {
+				return $this->readFile($this->fileName);
+			}
+		}
+	}
+	
+	/**
+	 * Exporting data into an excel file.
+	 * 
 	 * ~~~
 	 * 
 	 * \moonland\phpexcel\Excel::export([
@@ -544,51 +687,84 @@ class Excel extends \yii\base\Widget
 	 * 
 	 * ~~~
 	 * 
-     * @param array $config
-     * @return string
-     */
-    public static function export($config=[])
-    {
-    	$config = ArrayHelper::merge(['mode' => 'export'], $config);
-    	return self::widget($config);
-    }
-    
-    /**
-     * Import file excel and return into an array.
-     * 
+	 * New Feature for exporting data, you can use this if you familiar yii gridview. 
+	 * That is same with gridview data column.
+	 * Columns in array mode valid params are 'attribute', 'header', 'format', 'value', and footer (TODO).
+	 * Columns in string mode valid layout are 'attribute:format:header:footer(TODO)'.
+	 * 
+	 * ~~~
+	 * 
+	 * \moonland\phpexcel\Excel::export([
+	 *  	'models' => Post::find()->all(),
+	 *     	'columns' => [
+	 *     		'author.name:text:Author Name',
+	 *     		[
+	 *     				'attribute' => 'content',
+	 *     				'header' => 'Content Post',
+	 *     				'format' => 'text',
+	 *     				'value' => function($model) {
+	 *     					return ExampleClass::removeText('example', $model->content);
+	 *     				},
+	 *     		],
+	 *     		'like_it:text:Reader like this content',
+	 *     		'created_at:datetime',
+	 *     		[
+	 *     				'attribute' => 'updated_at',
+	 *     				'format' => 'date',
+	 *     		],
+	 *     	],
+	 *     	'headers' => [
+	 *     		'created_at' => 'Date Created Content',
+	 * 		],
+	 * ]);
+	 * 
+	 * ~~~
+	 * 
+	 * @param array $config
+	 * @return string
+	 */
+	public static function export($config=[])
+	{
+		$config = ArrayHelper::merge(['mode' => 'export'], $config);
+		return self::widget($config);
+	}
+	
+	/**
+	 * Import file excel and return into an array.
+	 * 
 	 * ~~~
 	 * 
 	 * $data = \moonland\phpexcel\Excel::import($fileName, ['setFirstRecordAsKeys' => true]);
 	 * 
 	 * ~~~
 	 * 
-     * @param string!array $fileName to load.
-     * @param array $config is a more configuration.
-     * @return string
-     */
-    public static function import($fileName, $config=[])
-    {
-    	$config = ArrayHelper::merge(['mode' => 'import', 'fileName' => $fileName, 'asArray' => true], $config);
-    	return self::widget($config);
-    }
-    
-    /**
-     * @param array $config
-     * @return string
-     */
-    public static function widget($config = [])
-    {
-    	if ($config['mode'] == 'import' && !isset($config['asArray'])) {
-    		$config['asArray'] = true;
-    	}
-    	
-    	if (isset($config['asArray']) && $config['asArray']==true)
-    	{
-            $config['class'] = get_called_class();
-            $widget = \Yii::createObject($config);
-            return $widget->run();
-    	} else {
-    		return parent::widget($config);
-    	}
-    }
+	 * @param string!array $fileName to load.
+	 * @param array $config is a more configuration.
+	 * @return string
+	 */
+	public static function import($fileName, $config=[])
+	{
+		$config = ArrayHelper::merge(['mode' => 'import', 'fileName' => $fileName, 'asArray' => true], $config);
+		return self::widget($config);
+	}
+	
+	/**
+	 * @param array $config
+	 * @return string
+	 */
+	public static function widget($config = [])
+	{
+		if ($config['mode'] == 'import' && !isset($config['asArray'])) {
+			$config['asArray'] = true;
+		}
+		
+		if (isset($config['asArray']) && $config['asArray']==true)
+		{
+	        $config['class'] = get_called_class();
+	        $widget = \Yii::createObject($config);
+	        return $widget->run();
+		} else {
+			return parent::widget($config);
+		}
+	}
 }
