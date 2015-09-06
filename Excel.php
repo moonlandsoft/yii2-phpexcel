@@ -212,6 +212,9 @@ use yii\i18n\Formatter;
  * If you want to set the keys of record column with first record, if it not set, the header with use the alphabet column on excel.
  * @property boolean $setIndexSheetByName to set the sheet index by sheet name or array result if the sheet not only one
  * @property string $getOnlySheet is a sheet name to getting the data. This is only get the sheet with same name.
+ * @property array|Formatter $formatter the formatter used to format model attribute values into displayable texts.
+ * This can be either an instance of [[Formatter]] or an configuration array for creating the [[Formatter]]
+ * instance. If this property is not set, the "formatter" application component will be used.
  * 
  * @author Moh Khoirul Anam <moh.khoirul.anaam@gmail.com>
  * @copyright 2014
@@ -290,7 +293,6 @@ class Excel extends \yii\base\Widget
 	 * @var array to read record by index, other will leave.
 	 */
 	public $getOnlyRecordByIndex = [];
-
 	/**
 	 * @var array|Formatter the formatter used to format model attribute values into displayable texts.
 	 * This can be either an instance of [[Formatter]] or an configuration array for creating the [[Formatter]]

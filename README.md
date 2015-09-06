@@ -41,6 +41,8 @@ boolean `$setIndexSheetByName` to set the sheet index by sheet name or array res
 
 string `$getOnlySheet` is a sheet name to getting the data. This is only get the sheet with same name.
 
+array|Formatter $formatter the formatter used to format model attribute values into displayable texts. This can be either an instance of [[Formatter]] or an configuration array for creating the [[Formatter]] instance. If this property is not set, the "formatter" application component will be used.
+
 Installation
 ------------
 
@@ -64,7 +66,7 @@ to the require section of your `composer.json` file.
 Usage 
 -----
 
-## Exporting Data
+### Exporting Data
 
 Exporting data into an excel file.
 
@@ -166,7 +168,7 @@ Columns in string mode valid layout are 'attribute:format:header:footer(TODO)'.
 ```
 
 
-## Importing Data
+### Importing Data
 
 Import file excel and return into an array.
 
