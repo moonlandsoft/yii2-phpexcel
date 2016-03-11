@@ -588,22 +588,37 @@ class Excel extends \yii\base\Widget
 		
 		if ($sheetCount > 1) {
 			foreach ($objectPhpExcel->getSheetNames() as $sheetIndex => $sheetName) {
-				$objectPhpExcel->setActiveSheetIndexByName($sheetName);
-				$indexed = $this->setIndexSheetByName==true ? $sheetName : $sheetIndex;
-				$sheetDatas[$indexed] = $objectPhpExcel->getActiveSheet()->toArray(null, true, true, true);
-				if ($this->setFirstRecordAsKeys) {
-					$sheetDatas[$indexed] = $this->executeArrayLabel($sheetDatas[$indexed]);
+				if (isset($this->getOnlySheet) && $this->getOnlySheet != null) {
+					if(!$objectPhpExcel->getSheetByName($this->getOnlySheet)) {
+						return $sheetDatas;
+					}
+					$objectPhpExcel->setActiveSheetIndexByName($this->getOnlySheet);
+					$indexed = $this->getOnlySheet;
+					$sheetDatas[$indexed] = $objectPhpExcel->getActiveSheet()->toArray(null, true, true, true);
+					if ($this->setFirstRecordAsKeys) {
+						$sheetDatas[$indexed] = $this->executeArrayLabel($sheetDatas[$indexed]);
+					}
+					if (!empty($this->getOnlyRecordByIndex)) {
+						$sheetDatas[$indexed] = $this->executeGetOnlyRecords($sheetDatas[$indexed], $this->getOnlyRecordByIndex);
+					}
+					if (!empty($this->leaveRecordByIndex)) {
+						$sheetDatas[$indexed] = $this->executeLeaveRecords($sheetDatas[$indexed], $this->leaveRecordByIndex);
+					}
+					return $sheetDatas[$indexed];
+				} else {
+					$objectPhpExcel->setActiveSheetIndexByName($sheetName);
+					$indexed = $this->setIndexSheetByName==true ? $sheetName : $sheetIndex;
+					$sheetDatas[$indexed] = $objectPhpExcel->getActiveSheet()->toArray(null, true, true, true);
+					if ($this->setFirstRecordAsKeys) {
+						$sheetDatas[$indexed] = $this->executeArrayLabel($sheetDatas[$indexed]);
+					}
+					if (!empty($this->getOnlyRecordByIndex) && isset($this->getOnlyRecordByIndex[$indexed]) && is_array($this->getOnlyRecordByIndex[$indexed])) {
+						$sheetDatas = $this->executeGetOnlyRecords($sheetDatas, $this->getOnlyRecordByIndex[$indexed]);
+					}
+					if (!empty($this->leaveRecordByIndex) && isset($this->leaveRecordByIndex[$indexed]) && is_array($this->leaveRecordByIndex[$indexed])) {
+						$sheetDatas[$indexed] = $this->executeLeaveRecords($sheetDatas[$indexed], $this->leaveRecordByIndex[$indexed]);
+					}
 				}
-				if (!empty($this->getOnlyRecordByIndex) && isset($this->getOnlyRecordByIndex[$indexed]) && is_array($this->getOnlyRecordByIndex[$indexed])) {
-					$sheetDatas = $this->executeGetOnlyRecords($sheetDatas, $this->getOnlyRecordByIndex[$indexed]);
-				}
-				if (!empty($this->leaveRecordByIndex) && isset($this->leaveRecordByIndex[$indexed]) && is_array($this->leaveRecordByIndex[$indexed])) {
-					$sheetDatas[$indexed] = $this->executeLeaveRecords($sheetDatas[$indexed], $this->leaveRecordByIndex[$indexed]);
-				}
-			}
-			if (isset($this->getOnlySheet) && $this->getOnlySheet != null) {
-				$indexed = $this->setIndexSheetByName==true ? $this->getOnlySheet : $objectPhpExcel->getIndex($objectPhpExcel->getSheetByName($this->getOnlySheet));
-				return $sheetDatas[$indexed];
 			}
 		} else {
 			$sheetDatas = $objectPhpExcel->getActiveSheet()->toArray(null, true, true, true);
