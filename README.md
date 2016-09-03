@@ -80,13 +80,13 @@ Exporting data into an excel file.
 	'models' => $allModels,
 	'mode' => 'export', //default value as 'export'
 	'columns' => ['column1','column2','column3'], //without header working, because the header will be get label from attribute label. 
-	'header' => ['column1' => 'Header Column 1','column2' => 'Header Column 2', 'column3' => 'Header Column 3'], 
+	'headers' => ['column1' => 'Header Column 1','column2' => 'Header Column 2', 'column3' => 'Header Column 3'], 
 ]);
 
 \moonland\phpexcel\Excel::export([
 	'models' => $allModels, 
 	'columns' => ['column1','column2','column3'], //without header working, because the header will be get label from attribute label. 
-	'header' => ['column1' => 'Header Column 1','column2' => 'Header Column 2', 'column3' => 'Header Column 3'],
+	'headers' => ['column1' => 'Header Column 1','column2' => 'Header Column 2', 'column3' => 'Header Column 3'],
 ]);
 
 // export data with multiple worksheet.
@@ -105,7 +105,7 @@ Exporting data into an excel file.
 		'sheet3' => ['column1','column2','column3']
 	],
 	//without header working, because the header will be get label from attribute label. 
-	'header' => [
+	'headers' => [
 		'sheet1' => ['column1' => 'Header Column 1','column2' => 'Header Column 2', 'column3' => 'Header Column 3'], 
 		'sheet2' => ['column1' => 'Header Column 1','column2' => 'Header Column 2', 'column3' => 'Header Column 3'], 
 		'sheet3' => ['column1' => 'Header Column 1','column2' => 'Header Column 2', 'column3' => 'Header Column 3']
@@ -124,7 +124,7 @@ Exporting data into an excel file.
 		'sheet3' => ['column1','column2','column3']
 	], 
 	//without header working, because the header will be get label from attribute label. 
-	'header' => [
+	'headers' => [
 		'sheet1' => ['column1' => 'Header Column 1','column2' => 'Header Column 2', 'column3' => 'Header Column 3'],
 		'sheet2' => ['column1' => 'Header Column 1','column2' => 'Header Column 2', 'column3' => 'Header Column 3'],
 		'sheet3' => ['column1' => 'Header Column 1','column2' => 'Header Column 2', 'column3' => 'Header Column 3']
