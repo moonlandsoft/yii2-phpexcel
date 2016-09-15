@@ -9,16 +9,16 @@ use yii\i18n\Formatter;
 
 /**
  * Excel Widget for generate Excel File or for load Excel File.
- * 
+ *
  * Usage
  * -----
- * 
+ *
  * Exporting data into an excel file.
- * 
+ *
  * ~~~
- * 
+ *
  * // export data only one worksheet.
- * 
+ *
  * \moonland\phpexcel\Excel::widget([
  * 		'models' => $allModels,
  * 		'mode' => 'export', //default value as 'export'
@@ -26,21 +26,21 @@ use yii\i18n\Formatter;
  * 		//without header working, because the header will be get label from attribute label.
  * 		'headers' => ['column1' => 'Header Column 1','column2' => 'Header Column 2', 'column3' => 'Header Column 3'],
  * ]);
- * 
+ *
  * \moonland\phpexcel\Excel::export([
  * 		'models' => $allModels,
  * 		'columns' => ['column1','column2','column3'],
  * 		//without header working, because the header will be get label from attribute label.
  * 		'headers' => ['column1' => 'Header Column 1','column2' => 'Header Column 2', 'column3' => 'Header Column 3'],
  * ]);
- * 
+ *
  * // export data with multiple worksheet.
- * 
+ *
  * \moonland\phpexcel\Excel::widget([
  * 		'isMultipleSheet' => true,
  * 		'models' => [
- * 			'sheet1' => $allModels1, 
- * 			'sheet2' => $allModels2, 
+ * 			'sheet1' => $allModels1,
+ * 			'sheet2' => $allModels2,
  * 			'sheet3' => $allModels3
  * 		],
  * 		'mode' => 'export', //default value as 'export'
@@ -51,17 +51,17 @@ use yii\i18n\Formatter;
  * 		],
  * 		//without header working, because the header will be get label from attribute label.
  * 		'headers' => [
- * 			'sheet1' => ['column1' => 'Header Column 1','column2' => 'Header Column 2', 'column3' => 'Header Column 3'], 
- * 			'sheet2' => ['column1' => 'Header Column 1','column2' => 'Header Column 2', 'column3' => 'Header Column 3'], 
+ * 			'sheet1' => ['column1' => 'Header Column 1','column2' => 'Header Column 2', 'column3' => 'Header Column 3'],
+ * 			'sheet2' => ['column1' => 'Header Column 1','column2' => 'Header Column 2', 'column3' => 'Header Column 3'],
  * 			'sheet3' => ['column1' => 'Header Column 1','column2' => 'Header Column 2', 'column3' => 'Header Column 3']
  * 		],
  * ]);
- * 
+ *
  * \moonland\phpexcel\Excel::export([
  * 		'isMultipleSheet' => true,
  * 		'models' => [
- * 			'sheet1' => $allModels1, 
- * 			'sheet2' => $allModels2, 
+ * 			'sheet1' => $allModels1,
+ * 			'sheet2' => $allModels2,
  * 			'sheet3' => $allModels3
  * 		],
  * 		'columns' => [
@@ -71,21 +71,21 @@ use yii\i18n\Formatter;
  * 		],
  * 		//without header working, because the header will be get label from attribute label.
  * 		'headers' => [
- * 			'sheet1' => ['column1' => 'Header Column 1','column2' => 'Header Column 2', 'column3' => 'Header Column 3'], 
- * 			'sheet2' => ['column1' => 'Header Column 1','column2' => 'Header Column 2', 'column3' => 'Header Column 3'], 
+ * 			'sheet1' => ['column1' => 'Header Column 1','column2' => 'Header Column 2', 'column3' => 'Header Column 3'],
+ * 			'sheet2' => ['column1' => 'Header Column 1','column2' => 'Header Column 2', 'column3' => 'Header Column 3'],
  * 			'sheet3' => ['column1' => 'Header Column 1','column2' => 'Header Column 2', 'column3' => 'Header Column 3']
  * 		],
  * ]);
- * 
+ *
  * ~~~
- * 
- * New Feature for exporting data, you can use this if you familiar yii gridview. 
+ *
+ * New Feature for exporting data, you can use this if you familiar yii gridview.
  * That is same with gridview data column.
  * Columns in array mode valid params are 'attribute', 'header', 'format', 'value', and footer (TODO).
  * Columns in string mode valid layout are 'attribute:format:header:footer(TODO)'.
- * 
+ *
  * ~~~
- * 
+ *
  * \moonland\phpexcel\Excel::export([
  *  	'models' => Post::find()->all(),
  *     	'columns' => [
@@ -109,16 +109,16 @@ use yii\i18n\Formatter;
  *     		'created_at' => 'Date Created Content',
  * 		],
  * ]);
- * 
+ *
  * ~~~
- * 
- * 
+ *
+ *
  * Import file excel and return into an array.
- * 
+ *
  * ~~~
- * 
+ *
  * $data = \moonland\phpexcel\Excel::import($fileName, $config); // $config is an optional
- * 
+ *
  * $data = \moonland\phpexcel\Excel::widget([
  * 		'mode' => 'import',
  * 		'fileName' => $fileName,
@@ -126,7 +126,7 @@ use yii\i18n\Formatter;
  * 		'setIndexSheetByName' => true, // set this if your excel data with multiple worksheet, the index of array will be set with the sheet name. If this not set, the index will use numeric.
  * 		'getOnlySheet' => 'sheet1', // you can set this property if you want to get the specified sheet from the excel data with multiple worksheet.
  * ]);
- * 
+ *
  * $data = \moonland\phpexcel\Excel::import($fileName, [
  * 		'setFirstRecordAsKeys' => true, // if you want to set the keys of record column with first record, if it not set, the header with use the alphabet column on excel.
  * 		'setIndexSheetByName' => true, // set this if your excel data with multiple worksheet, the index of array will be set with the sheet name. If this not set, the index will use numeric.
@@ -134,7 +134,7 @@ use yii\i18n\Formatter;
  *	]);
  *
  * // import data with multiple file.
- * 
+ *
  * $data = \moonland\phpexcel\Excel::widget([
  * 		'mode' => 'import',
  * 		'fileName' => [
@@ -146,7 +146,7 @@ use yii\i18n\Formatter;
  * 		'setIndexSheetByName' => true, // set this if your excel data with multiple worksheet, the index of array will be set with the sheet name. If this not set, the index will use numeric.
  * 		'getOnlySheet' => 'sheet1', // you can set this property if you want to get the specified sheet from the excel data with multiple worksheet.
  * ]);
- * 
+ *
  * $data = \moonland\phpexcel\Excel::import([
  * 			'file1' => $fileName1,
  * 			'file2' => $fileName2,
@@ -158,64 +158,64 @@ use yii\i18n\Formatter;
  *	]);
  *
  * ~~~
- * 
+ *
  * Result example from the code on the top :
- * 
+ *
  * ~~~
- * 
+ *
  * // only one sheet or specified sheet.
- * 
- * Array([0] => Array([name] => Anam, [email] => moh.khoirul.anaam@gmail.com, [framework interest] => Yii2), 
+ *
+ * Array([0] => Array([name] => Anam, [email] => moh.khoirul.anaam@gmail.com, [framework interest] => Yii2),
  * [1] => Array([name] => Example, [email] => example@moonlandsoft.com, [framework interest] => Yii2));
- * 
+ *
  * // data with multiple worksheet
- * 
- * Array([Sheet1] => Array([0] => Array([name] => Anam, [email] => moh.khoirul.anaam@gmail.com, [framework interest] => Yii2), 
+ *
+ * Array([Sheet1] => Array([0] => Array([name] => Anam, [email] => moh.khoirul.anaam@gmail.com, [framework interest] => Yii2),
  * [1] => Array([name] => Example, [email] => example@moonlandsoft.com, [framework interest] => Yii2)),
- * [Sheet2] => Array([0] => Array([name] => Anam, [email] => moh.khoirul.anaam@gmail.com, [framework interest] => Yii2), 
+ * [Sheet2] => Array([0] => Array([name] => Anam, [email] => moh.khoirul.anaam@gmail.com, [framework interest] => Yii2),
  * [1] => Array([name] => Example, [email] => example@moonlandsoft.com, [framework interest] => Yii2)));
- * 
+ *
  * // data with multiple file and specified sheet or only one worksheet
- * 
- * Array([file1] => Array([0] => Array([name] => Anam, [email] => moh.khoirul.anaam@gmail.com, [framework interest] => Yii2), 
+ *
+ * Array([file1] => Array([0] => Array([name] => Anam, [email] => moh.khoirul.anaam@gmail.com, [framework interest] => Yii2),
  * [1] => Array([name] => Example, [email] => example@moonlandsoft.com, [framework interest] => Yii2)),
- * [file2] => Array([0] => Array([name] => Anam, [email] => moh.khoirul.anaam@gmail.com, [framework interest] => Yii2), 
+ * [file2] => Array([0] => Array([name] => Anam, [email] => moh.khoirul.anaam@gmail.com, [framework interest] => Yii2),
  * [1] => Array([name] => Example, [email] => example@moonlandsoft.com, [framework interest] => Yii2)));
- * 
+ *
  * // data with multiple file and multiple worksheet
- * 
- * Array([file1] => Array([Sheet1] => Array([0] => Array([name] => Anam, [email] => moh.khoirul.anaam@gmail.com, [framework interest] => Yii2), 
+ *
+ * Array([file1] => Array([Sheet1] => Array([0] => Array([name] => Anam, [email] => moh.khoirul.anaam@gmail.com, [framework interest] => Yii2),
  * [1] => Array([name] => Example, [email] => example@moonlandsoft.com, [framework interest] => Yii2)),
- * [Sheet2] => Array([0] => Array([name] => Anam, [email] => moh.khoirul.anaam@gmail.com, [framework interest] => Yii2), 
+ * [Sheet2] => Array([0] => Array([name] => Anam, [email] => moh.khoirul.anaam@gmail.com, [framework interest] => Yii2),
  * [1] => Array([name] => Example, [email] => example@moonlandsoft.com, [framework interest] => Yii2))),
- * [file2] => Array([Sheet1] => Array([0] => Array([name] => Anam, [email] => moh.khoirul.anaam@gmail.com, [framework interest] => Yii2), 
+ * [file2] => Array([Sheet1] => Array([0] => Array([name] => Anam, [email] => moh.khoirul.anaam@gmail.com, [framework interest] => Yii2),
  * [1] => Array([name] => Example, [email] => example@moonlandsoft.com, [framework interest] => Yii2)),
- * [Sheet2] => Array([0] => Array([name] => Anam, [email] => moh.khoirul.anaam@gmail.com, [framework interest] => Yii2), 
+ * [Sheet2] => Array([0] => Array([name] => Anam, [email] => moh.khoirul.anaam@gmail.com, [framework interest] => Yii2),
  * [1] => Array([name] => Example, [email] => example@moonlandsoft.com, [framework interest] => Yii2))));
- * 
+ *
  * ~~~
- * 
+ *
  * @property string $mode is an export mode or import mode. valid value are 'export' and 'import'
  * @property boolean $isMultipleSheet for set the export excel with multiple sheet.
  * @property array $properties for set property on the excel object.
  * @property array $models Model object or DataProvider object with much data.
- * @property array $columns to get the attributes from the model, this valid value only the exist attribute on the model. 
+ * @property array $columns to get the attributes from the model, this valid value only the exist attribute on the model.
  * If this is not set, then all attribute of the model will be set as columns.
- * @property array $headers to set the header column on first line. Set this if want to custom header. 
+ * @property array $headers to set the header column on first line. Set this if want to custom header.
  * If not set, the header will get attributes label of model attributes.
  * @property string|array $fileName is a name for file name to export or import. Multiple file name only use for import mode, not work if you use the export mode.
  * @property string $savePath is a directory to save the file or you can blank this to set the file as attachment.
  * @property string $format for excel to export. Valid value are 'Excel5','Excel2007','Excel2003XML','00Calc','Gnumeric'.
  * @property boolean $setFirstTitle to set the title column on the first line. The columns will have a header on the first line.
  * @property boolean $asAttachment to set the file excel to download mode.
- * @property boolean $setFirstRecordAsKeys to set the first record on excel file to a keys of array per line. 
+ * @property boolean $setFirstRecordAsKeys to set the first record on excel file to a keys of array per line.
  * If you want to set the keys of record column with first record, if it not set, the header with use the alphabet column on excel.
  * @property boolean $setIndexSheetByName to set the sheet index by sheet name or array result if the sheet not only one
  * @property string $getOnlySheet is a sheet name to getting the data. This is only get the sheet with same name.
  * @property array|Formatter $formatter the formatter used to format model attribute values into displayable texts.
  * This can be either an instance of [[Formatter]] or an configuration array for creating the [[Formatter]]
  * instance. If this property is not set, the "formatter" application component will be used.
- * 
+ *
  * @author Moh Khoirul Anam <moh.khoirul.anaam@gmail.com>
  * @copyright 2014
  * @since 1
@@ -244,7 +244,7 @@ class Excel extends \yii\base\Widget
 	 */
 	public $columns = [];
 	/**
-	 * @var array header to set the header column on first line. Set this if want to custom header. 
+	 * @var array header to set the header column on first line. Set this if want to custom header.
 	 * If not set, the header will get attributes label of model attributes.
 	 */
 	public $headers = [];
@@ -269,7 +269,7 @@ class Excel extends \yii\base\Widget
 	 */
 	public $asAttachment = true;
 	/**
-	 * @var boolean to set the first record on excel file to a keys of array per line. 
+	 * @var boolean to set the first record on excel file to a keys of array per line.
 	 * If you want to set the keys of record column with first record, if it not set, the header with use the alphabet column on excel.
 	 */
 	public $setFirstRecordAsKeys = true;
@@ -299,7 +299,7 @@ class Excel extends \yii\base\Widget
 	 * instance. If this property is not set, the "formatter" application component will be used.
 	 */
 	public $formatter;
-	
+
 	/**
 	 * (non-PHPdoc)
 	 * @see \yii\base\Object::init()
@@ -316,7 +316,7 @@ class Excel extends \yii\base\Widget
 			throw new InvalidConfigException('The "formatter" property must be either a Format object or a configuration array.');
 		}
 	}
-	
+
 	/**
 	 * Setting data from models
 	 */
@@ -390,7 +390,7 @@ class Excel extends \yii\base\Widget
 			$row++;
 		}
 	}
-	
+
 	/**
 	 * Setting label or keys on every record if setFirstRecordAsKeys is true.
 	 * @param array $sheetData
@@ -399,17 +399,17 @@ class Excel extends \yii\base\Widget
 	public function executeArrayLabel($sheetData)
 	{
 		$keys = ArrayHelper::remove($sheetData, '1');
-		
+
 		$new_data = [];
-		
+
 		foreach ($sheetData as $values)
 		{
 			$new_data[] = array_combine($keys, $values);
 		}
-		
+
 		return $new_data;
 	}
-	
+
 	/**
 	 * Leave record with same index number.
 	 * @param array $sheetData
@@ -427,7 +427,7 @@ class Excel extends \yii\base\Widget
 		}
 		return $sheetData;
 	}
-	
+
 	/**
 	 * Read record with same index number.
 	 * @param array $sheetData
@@ -445,7 +445,7 @@ class Excel extends \yii\base\Widget
 		}
 		return $sheetData;
 	}
-	
+
 	/**
 	 * Getting column value.
 	 * @param Model $model
@@ -464,13 +464,13 @@ class Excel extends \yii\base\Widget
 		} elseif (isset($params['attribute']) && $params['attribute'] !== null) {
 			$value = ArrayHelper::getValue($model, $params['attribute']);
 		}
-		
+
 		if (isset($params['format']) && $params['format'] != null)
 			$value = $this->formatter()->format($value, $params['format']);
-		
+
 		return $value;
 	}
-	
+
 	/**
 	 * Populating columns for checking the column is string or array. if is string this will be checking have a formatter or header.
 	 * @param array $columns
@@ -486,11 +486,11 @@ class Excel extends \yii\base\Widget
 			{
 				$value_log = explode(':', $value);
 				$_columns[$key] = ['attribute' => $value_log[0]];
-				
+
 				if (isset($value_log[1]) && $value_log[1] !== null) {
 					$_columns[$key]['format'] = $value_log[1];
 				}
-				
+
 				if (isset($value_log[2]) && $value_log[2] !== null) {
 					$_columns[$key]['header'] = $value_log[2];
 				}
@@ -501,10 +501,10 @@ class Excel extends \yii\base\Widget
 				$_columns[$key] = $value;
 			}
 		}
-		
+
 		return $_columns;
 	}
-	
+
 	/**
 	 * Formatter for i18n.
 	 * @return Formatter
@@ -513,10 +513,10 @@ class Excel extends \yii\base\Widget
 	{
 		if (!isset($this->formatter))
 			$this->formatter = \Yii::$app->getFormatter();
-		
+
 		return $this->formatter;
 	}
-	
+
 	/**
 	 * Setting header to download generated file xls
 	 */
@@ -526,7 +526,7 @@ class Excel extends \yii\base\Widget
 		header('Content-Disposition: attachment;filename="' . $this->getFileName() .'"');
 		header('Cache-Control: max-age=0');
 	}
-	
+
 	/**
 	 * Getting the file name of exporting xls file
 	 * @return string
@@ -541,7 +541,7 @@ class Excel extends \yii\base\Widget
 		}
 		return $fileName;
 	}
-	
+
 	/**
 	 * Setting properties for excel file
 	 * @param PHPExcel $objectExcel
@@ -555,7 +555,7 @@ class Excel extends \yii\base\Widget
 			$objectExcel->getProperties()->{$keyname}($value);
 		}
 	}
-	
+
 	/**
 	 * saving the xls file to download or to path
 	 */
@@ -571,7 +571,7 @@ class Excel extends \yii\base\Widget
 		$objectwriter->save($path);
 		exit();
 	}
-	
+
 	/**
 	 * reading the xls file
 	 */
@@ -581,11 +581,11 @@ class Excel extends \yii\base\Widget
 			$this->format = \PHPExcel_IOFactory::identify($fileName);
 		$objectreader = \PHPExcel_IOFactory::createReader($this->format);
 		$objectPhpExcel = $objectreader->load($fileName);
-		
+
 		$sheetCount = $objectPhpExcel->getSheetCount();
-		
+
 		$sheetDatas = [];
-		
+
 		if ($sheetCount > 1) {
 			foreach ($objectPhpExcel->getSheetNames() as $sheetIndex => $sheetName) {
 				if (isset($this->getOnlySheet) && $this->getOnlySheet != null) {
@@ -632,28 +632,28 @@ class Excel extends \yii\base\Widget
 				$sheetDatas = $this->executeLeaveRecords($sheetDatas, $this->leaveRecordByIndex);
 			}
 		}
-		
+
 		return $sheetDatas;
 	}
-	
+
 	/**
 	 * (non-PHPdoc)
 	 * @see \yii\base\Widget::run()
 	 */
 	public function run()
 	{
-		if ($this->mode == 'export') 
+		if ($this->mode == 'export')
 		{
 	    	$sheet = new \PHPExcel();
-	    	
+
 	    	if (!isset($this->models))
 	    		throw new InvalidConfigException('Config models must be set');
-	    	
+
 	    	if (isset($this->properties))
 	    	{
 	    		$this->properties($sheet, $this->properties);
 	    	}
-	    	
+
 	    	if ($this->isMultipleSheet) {
 	    		$index = 0;
 	    		$worksheet = [];
@@ -670,13 +670,13 @@ class Excel extends \yii\base\Widget
 	    		$worksheet = $sheet->getActiveSheet();
 	    		$this->executeColumns($worksheet, $this->models, isset($this->columns) ? $this->populateColumns($this->columns) : [], isset($this->headers) ? $this->headers : []);
 	    	}
-	    	
+
 	    	if ($this->asAttachment) {
 	    		$this->setHeaders();
 	    	}
 	    	$this->writeFile($sheet);
-		} 
-		elseif ($this->mode == 'import') 
+		}
+		elseif ($this->mode == 'import')
 		{
 			if (is_array($this->fileName)) {
 				$datas = [];
@@ -689,28 +689,28 @@ class Excel extends \yii\base\Widget
 			}
 		}
 	}
-	
+
 	/**
 	 * Exporting data into an excel file.
-	 * 
+	 *
 	 * ~~~
-	 * 
+	 *
 	 * \moonland\phpexcel\Excel::export([
 	 * 		'models' => $allModels,
 	 * 		'columns' => ['column1','column2','column3'],
 	 * 		//without header working, because the header will be get label from attribute label.
 	 * 		'header' => ['column1' => 'Header Column 1','column2' => 'Header Column 2', 'column3' => 'Header Column 3'],
 	 * ]);
-	 * 
+	 *
 	 * ~~~
-	 * 
-	 * New Feature for exporting data, you can use this if you familiar yii gridview. 
+	 *
+	 * New Feature for exporting data, you can use this if you familiar yii gridview.
 	 * That is same with gridview data column.
 	 * Columns in array mode valid params are 'attribute', 'header', 'format', 'value', and footer (TODO).
 	 * Columns in string mode valid layout are 'attribute:format:header:footer(TODO)'.
-	 * 
+	 *
 	 * ~~~
-	 * 
+	 *
 	 * \moonland\phpexcel\Excel::export([
 	 *  	'models' => Post::find()->all(),
 	 *     	'columns' => [
@@ -734,9 +734,9 @@ class Excel extends \yii\base\Widget
 	 *     		'created_at' => 'Date Created Content',
 	 * 		],
 	 * ]);
-	 * 
+	 *
 	 * ~~~
-	 * 
+	 *
 	 * @param array $config
 	 * @return string
 	 */
@@ -745,16 +745,16 @@ class Excel extends \yii\base\Widget
 		$config = ArrayHelper::merge(['mode' => 'export'], $config);
 		return self::widget($config);
 	}
-	
+
 	/**
 	 * Import file excel and return into an array.
-	 * 
+	 *
 	 * ~~~
-	 * 
+	 *
 	 * $data = \moonland\phpexcel\Excel::import($fileName, ['setFirstRecordAsKeys' => true]);
-	 * 
+	 *
 	 * ~~~
-	 * 
+	 *
 	 * @param string!array $fileName to load.
 	 * @param array $config is a more configuration.
 	 * @return string
@@ -764,17 +764,17 @@ class Excel extends \yii\base\Widget
 		$config = ArrayHelper::merge(['mode' => 'import', 'fileName' => $fileName, 'asArray' => true], $config);
 		return self::widget($config);
 	}
-	
+
 	/**
 	 * @param array $config
 	 * @return string
 	 */
 	public static function widget($config = [])
 	{
-		if ($config['mode'] == 'import' && !isset($config['asArray'])) {
+		if ((isset($config['mode']) and $config['mode'] == 'import') && !isset($config['asArray'])) {
 			$config['asArray'] = true;
 		}
-		
+
 		if (isset($config['asArray']) && $config['asArray']==true)
 		{
 	        $config['class'] = get_called_class();
