@@ -357,7 +357,11 @@ class Excel extends \yii\base\Widget
 							$header = $model->getAttributeLabel($column['attribute']);
 						}
 					} else {
-						$header = $model->getAttributeLabel($column);
+						if(isset($headers[$column])) {
+							$header = $headers[$column];
+						} else {
+							$header = $model->getAttributeLabel($column);
+						}
 					}
 					$activeSheet->setCellValue($col.$row,$header);
 					$colnum++;
