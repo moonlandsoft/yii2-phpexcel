@@ -569,7 +569,9 @@ class Excel extends \yii\base\Widget
 			$path = $this->savePath . '/' . $this->getFileName();
 		}
 		$objectwriter->save($path);
-		exit();
+
+		if ($this->asAttachment)
+			exit();
 	}
 	
 	/**
