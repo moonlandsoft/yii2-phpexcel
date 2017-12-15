@@ -569,7 +569,11 @@ class Excel extends \yii\base\Widget
 			$path = $this->savePath . '/' . $this->getFileName();
 		}
 		$objectwriter->save($path);
-		exit();
+
+		if ($this->asAttachment)
+			exit();
+		
+	        return true;
 	}
 	
 	/**
@@ -674,7 +678,7 @@ class Excel extends \yii\base\Widget
 	    	if ($this->asAttachment) {
 	    		$this->setHeaders();
 	    	}
-	    	$this->writeFile($sheet);
+	    	return $this->writeFile($sheet);
 		} 
 		elseif ($this->mode == 'import') 
 		{
