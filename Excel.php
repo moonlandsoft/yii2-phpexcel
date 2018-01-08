@@ -533,12 +533,34 @@ class Excel extends \yii\base\Widget
 	 */
 	public function getFileName()
 	{
-		$fileName = 'exports.xls';
 		if (isset($this->fileName)) {
 			$fileName = $this->fileName;
-			if (strpos($fileName, '.xls') === false)
-				$fileName .= '.xls';
+		} else {
+			$fileName = 'exports';
 		}
+
+		$pathinfo = pathinfo($this->fileName);
+		if (!isset($pathinfo['extension'])) {
+			$extensionMap = [
+				'Excel2007' => '.xlsx',
+				'Excel5' => '.xls',
+				'Excel2003XML' => '.xml',
+				'OOCalc' => '.ods',
+				'SYLK' => '.slk',
+				'Gnumeric' => '.Gnumeric',
+				'HTML' => '.html',
+				'CSV' => '.csv',
+			];
+
+			if(isset($this->format)) {
+				if(isset($extensionMap[$format])) {
+					$fileName .= $extensionMap[$this->format];
+				}
+			} else {
+				$fileName .= $extensionMap['Excel2007'];
+			}
+		}
+
 		return $fileName;
 	}
 	
