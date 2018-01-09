@@ -1,9 +1,6 @@
 Yii2 PHP Excel
 ==============
 
-[![Latest Stable Version](https://poser.pugx.org/moonlandsoft/yii2-phpexcel/v/stable)](https://packagist.org/packages/moonlandsoft/yii2-phpexcel) 
-[![Total Downloads](https://poser.pugx.org/moonlandsoft/yii2-phpexcel/downloads)](https://packagist.org/packages/moonlandsoft/yii2-phpexcel) 
-[![Latest Unstable Version](https://poser.pugx.org/moonlandsoft/yii2-phpexcel/v/unstable)](https://packagist.org/packages/moonlandsoft/yii2-phpexcel) 
 [![License](https://poser.pugx.org/moonlandsoft/yii2-phpexcel/license)](https://packagist.org/packages/moonlandsoft/yii2-phpexcel)
 
 Exporting PHP to Excel or Importing Excel to PHP.
