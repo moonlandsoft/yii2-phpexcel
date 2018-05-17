@@ -566,7 +566,7 @@ class Excel extends \yii\base\Widget
 	
 	/**
 	 * Setting properties for excel file
-	 * @param PHPExcel $objectExcel
+	 * @param \PhpOffice\PhpSpreadsheet\Spreadsheet $objectExcel
 	 * @param array $properties
 	 */
 	public function properties(&$objectExcel, $properties = [])
@@ -585,7 +585,7 @@ class Excel extends \yii\base\Widget
 	{
 		if (!isset($this->format))
 			$this->format = 'Excel2007';
-		$objectwriter = \PHPExcel_IOFactory::createWriter($sheet, $this->format);
+		$objectwriter = \PhpOffice\PhpSpreadsheet\IOFactory::createWriter($sheet, $this->format);
 		$path = 'php://output';
 		if (isset($this->savePath) && $this->savePath != null) {
 			$path = $this->savePath . '/' . $this->getFileName();
@@ -600,8 +600,8 @@ class Excel extends \yii\base\Widget
 	public function readFile($fileName)
 	{
 		if (!isset($this->format))
-			$this->format = \PHPExcel_IOFactory::identify($fileName);
-		$objectreader = \PHPExcel_IOFactory::createReader($this->format);
+			$this->format = \PhpOffice\PhpSpreadsheet\IOFactory::identify($fileName);
+		$objectreader = \PhpOffice\PhpSpreadsheet\IOFactory::createReader($this->format);
 		$objectPhpExcel = $objectreader->load($fileName);
 		
 		$sheetCount = $objectPhpExcel->getSheetCount();
@@ -666,7 +666,7 @@ class Excel extends \yii\base\Widget
 	{
 		if ($this->mode == 'export') 
 		{
-	    	$sheet = new \PHPExcel();
+	    	$sheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
 	    	
 	    	if (!isset($this->models))
 	    		throw new InvalidConfigException('Config models must be set');
