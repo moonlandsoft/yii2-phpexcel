@@ -2,6 +2,8 @@
 
 namespace moonland\phpexcel;
 
+use PhpOffice\PhpSpreadsheet\IOFactory;
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use yii\helpers\ArrayHelper;
 use yii\base\InvalidConfigException;
 use yii\base\InvalidParamException;
@@ -24,14 +26,14 @@ use yii\i18n\Formatter;
  * 		'mode' => 'export', //default value as 'export'
  * 		'columns' => ['column1','column2','column3'],
  * 		//without header working, because the header will be get label from attribute label.
- * 		'headers' => ['column1' => 'Header Column 1','column2' => 'Header Column 2', 'column3' => 'Header Column 3'],
+ * 		'header' => ['column1' => 'Header Column 1','column2' => 'Header Column 2', 'column3' => 'Header Column 3'],
  * ]);
  * 
  * \moonland\phpexcel\Excel::export([
  * 		'models' => $allModels,
  * 		'columns' => ['column1','column2','column3'],
  * 		//without header working, because the header will be get label from attribute label.
- * 		'headers' => ['column1' => 'Header Column 1','column2' => 'Header Column 2', 'column3' => 'Header Column 3'],
+ * 		'header' => ['column1' => 'Header Column 1','column2' => 'Header Column 2', 'column3' => 'Header Column 3'],
  * ]);
  * 
  * // export data with multiple worksheet.
@@ -50,7 +52,7 @@ use yii\i18n\Formatter;
  * 			'sheet3' => ['column1','column2','column3']
  * 		],
  * 		//without header working, because the header will be get label from attribute label.
- * 		'headers' => [
+ * 		'header' => [
  * 			'sheet1' => ['column1' => 'Header Column 1','column2' => 'Header Column 2', 'column3' => 'Header Column 3'], 
  * 			'sheet2' => ['column1' => 'Header Column 1','column2' => 'Header Column 2', 'column3' => 'Header Column 3'], 
  * 			'sheet3' => ['column1' => 'Header Column 1','column2' => 'Header Column 2', 'column3' => 'Header Column 3']
@@ -70,7 +72,7 @@ use yii\i18n\Formatter;
  * 			'sheet3' => ['column1','column2','column3']
  * 		],
  * 		//without header working, because the header will be get label from attribute label.
- * 		'headers' => [
+ * 		'header' => [
  * 			'sheet1' => ['column1' => 'Header Column 1','column2' => 'Header Column 2', 'column3' => 'Header Column 3'], 
  * 			'sheet2' => ['column1' => 'Header Column 1','column2' => 'Header Column 2', 'column3' => 'Header Column 3'], 
  * 			'sheet3' => ['column1' => 'Header Column 1','column2' => 'Header Column 2', 'column3' => 'Header Column 3']
@@ -533,18 +535,18 @@ class Excel extends \yii\base\Widget
 	 */
 	public function getFileName()
 	{
-		$fileName = 'exports.xls';
+		$fileName = 'exports.xlsx';
 		if (isset($this->fileName)) {
 			$fileName = $this->fileName;
-			if (strpos($fileName, '.xls') === false)
-				$fileName .= '.xls';
+			if (strpos($fileName, '.xlsx') === false)
+				$fileName .= '.xlsx';
 		}
 		return $fileName;
 	}
 	
 	/**
 	 * Setting properties for excel file
-	 * @param PHPExcel $objectExcel
+	 * @param Spreadsheet $objectExcel
 	 * @param array $properties
 	 */
 	public function properties(&$objectExcel, $properties = [])
@@ -563,7 +565,7 @@ class Excel extends \yii\base\Widget
 	{
 		if (!isset($this->format))
 			$this->format = 'Excel2007';
-		$objectwriter = \PHPExcel_IOFactory::createWriter($sheet, $this->format);
+		$objectwriter = IOFactory::createWriter($sheet, $this->format);
 		$path = 'php://output';
 		if (isset($this->savePath) && $this->savePath != null) {
 			$path = $this->savePath . '/' . $this->getFileName();
@@ -578,8 +580,8 @@ class Excel extends \yii\base\Widget
 	public function readFile($fileName)
 	{
 		if (!isset($this->format))
-			$this->format = \PHPExcel_IOFactory::identify($fileName);
-		$objectreader = \PHPExcel_IOFactory::createReader($this->format);
+			$this->format = IOFactory::identify($fileName);
+		$objectreader = IOFactory::createReader($this->format);
 		$objectPhpExcel = $objectreader->load($fileName);
 		
 		$sheetCount = $objectPhpExcel->getSheetCount();
@@ -588,37 +590,22 @@ class Excel extends \yii\base\Widget
 		
 		if ($sheetCount > 1) {
 			foreach ($objectPhpExcel->getSheetNames() as $sheetIndex => $sheetName) {
-				if (isset($this->getOnlySheet) && $this->getOnlySheet != null) {
-					if(!$objectPhpExcel->getSheetByName($this->getOnlySheet)) {
-						return $sheetDatas;
-					}
-					$objectPhpExcel->setActiveSheetIndexByName($this->getOnlySheet);
-					$indexed = $this->getOnlySheet;
-					$sheetDatas[$indexed] = $objectPhpExcel->getActiveSheet()->toArray(null, true, true, true);
-					if ($this->setFirstRecordAsKeys) {
-						$sheetDatas[$indexed] = $this->executeArrayLabel($sheetDatas[$indexed]);
-					}
-					if (!empty($this->getOnlyRecordByIndex)) {
-						$sheetDatas[$indexed] = $this->executeGetOnlyRecords($sheetDatas[$indexed], $this->getOnlyRecordByIndex);
-					}
-					if (!empty($this->leaveRecordByIndex)) {
-						$sheetDatas[$indexed] = $this->executeLeaveRecords($sheetDatas[$indexed], $this->leaveRecordByIndex);
-					}
-					return $sheetDatas[$indexed];
-				} else {
-					$objectPhpExcel->setActiveSheetIndexByName($sheetName);
-					$indexed = $this->setIndexSheetByName==true ? $sheetName : $sheetIndex;
-					$sheetDatas[$indexed] = $objectPhpExcel->getActiveSheet()->toArray(null, true, true, true);
-					if ($this->setFirstRecordAsKeys) {
-						$sheetDatas[$indexed] = $this->executeArrayLabel($sheetDatas[$indexed]);
-					}
-					if (!empty($this->getOnlyRecordByIndex) && isset($this->getOnlyRecordByIndex[$indexed]) && is_array($this->getOnlyRecordByIndex[$indexed])) {
-						$sheetDatas = $this->executeGetOnlyRecords($sheetDatas, $this->getOnlyRecordByIndex[$indexed]);
-					}
-					if (!empty($this->leaveRecordByIndex) && isset($this->leaveRecordByIndex[$indexed]) && is_array($this->leaveRecordByIndex[$indexed])) {
-						$sheetDatas[$indexed] = $this->executeLeaveRecords($sheetDatas[$indexed], $this->leaveRecordByIndex[$indexed]);
-					}
+				$objectPhpExcel->setActiveSheetIndexByName($sheetName);
+				$indexed = $this->setIndexSheetByName==true ? $sheetName : $sheetIndex;
+				$sheetDatas[$indexed] = $objectPhpExcel->getActiveSheet()->toArray(null, true, true, true);
+				if ($this->setFirstRecordAsKeys) {
+					$sheetDatas[$indexed] = $this->executeArrayLabel($sheetDatas[$indexed]);
 				}
+				if (!empty($this->getOnlyRecordByIndex) && isset($this->getOnlyRecordByIndex[$indexed]) && is_array($this->getOnlyRecordByIndex[$indexed])) {
+					$sheetDatas = $this->executeGetOnlyRecords($sheetDatas, $this->getOnlyRecordByIndex[$indexed]);
+				}
+				if (!empty($this->leaveRecordByIndex) && isset($this->leaveRecordByIndex[$indexed]) && is_array($this->leaveRecordByIndex[$indexed])) {
+					$sheetDatas[$indexed] = $this->executeLeaveRecords($sheetDatas[$indexed], $this->leaveRecordByIndex[$indexed]);
+				}
+			}
+			if (isset($this->getOnlySheet) && $this->getOnlySheet != null) {
+				$indexed = $this->setIndexSheetByName==true ? $this->getOnlySheet : $objectPhpExcel->getIndex($objectPhpExcel->getSheetByName($this->getOnlySheet));
+				return $sheetDatas[$indexed];
 			}
 		} else {
 			$sheetDatas = $objectPhpExcel->getActiveSheet()->toArray(null, true, true, true);
@@ -644,7 +631,7 @@ class Excel extends \yii\base\Widget
 	{
 		if ($this->mode == 'export') 
 		{
-	    	$sheet = new \PHPExcel();
+	    	$sheet = new Spreadsheet();
 	    	
 	    	if (!isset($this->models))
 	    		throw new InvalidConfigException('Config models must be set');
