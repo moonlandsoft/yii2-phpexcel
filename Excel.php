@@ -359,6 +359,9 @@ class Excel extends \yii\base\Widget
 					} else {
 						$header = $model->getAttributeLabel($column);
 					}
+					if (isset($column['width'])) {
+                        $activeSheet->getColumnDimension(strtoupper($col))->setWidth($column['width']);
+                    }
 					$activeSheet->setCellValue($col.$row,$header);
 					$colnum++;
 				}
