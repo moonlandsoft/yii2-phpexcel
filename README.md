@@ -149,6 +149,7 @@ Columns in string mode valid layout are 'attribute:format:header:footer(TODO)'.
       				'attribute' => 'content',
       				'header' => 'Content Post',
       				'format' => 'text',
+      				'width' => 10, //设置表格宽度
       				'value' => function($model) {
       					return ExampleClass::removeText('example', $model->content);
       				},
