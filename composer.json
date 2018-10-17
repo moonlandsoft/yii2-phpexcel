@@ -1,10 +1,14 @@
 {
-    "name": "moonlandsoft/yii2-phpexcel",
+    "name": "rickeryu/phpspread",
     "description": "Exporting PHP to Excel or Importing Excel to PHP",
     "type": "yii2-extension",
     "keywords": ["yii2","extension","excel","xls","export","import"],
     "license": "MIT",
     "authors": [
+        {
+            "name": "rickeryu",
+            "email": "ricker.zy@gmail.com"
+        },
         {
             "name": "Moh Khoirul Anam",
             "email": "moh.khoirul.anaam@gmail.com"
@@ -12,11 +16,11 @@
     ],
     "require": {
         "yiisoft/yii2": "*",
-        "phpoffice/phpexcel": "*"
+        "phpoffice/phpspreadsheet": "~1.0"
     },
     "autoload": {
         "psr-4": {
-            "moonland\\phpexcel\\": ""
+            "rickeryu\\phpspread\\": ""
         }
     }
 }
