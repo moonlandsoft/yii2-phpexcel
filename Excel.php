@@ -6,6 +6,8 @@ use yii\helpers\ArrayHelper;
 use yii\base\InvalidConfigException;
 use yii\base\InvalidParamException;
 use yii\i18n\Formatter;
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 
 /**
  * Excel Widget for generate Excel File or for load Excel File.
@@ -299,7 +301,11 @@ class Excel extends \yii\base\Widget
 	 * instance. If this property is not set, the "formatter" application component will be used.
 	 */
 	public $formatter;
-
+	/**
+	 * @var boolean define the column autosize
+	 */
+	public $autoSize = false;
+  
 	/**
 	 * (non-PHPdoc)
 	 * @see \yii\base\Object::init()
@@ -388,6 +394,12 @@ class Excel extends \yii\base\Widget
 				$colnum++;
 			}
 			$row++;
+			
+			if($this->autoSize){
+				foreach (range(0, $colnum) as $col) {
+					$activeSheet->getColumnDimensionByColumn($col)->setAutoSize(true);
+				}
+			}
 		}
 	}
 
@@ -533,11 +545,11 @@ class Excel extends \yii\base\Widget
 	 */
 	public function getFileName()
 	{
-		$fileName = 'exports.xls';
+		$fileName = 'exports.xlsx';
 		if (isset($this->fileName)) {
-			$fileName = $this->fileName;
-			if (strpos($fileName, '.xls') === false)
-				$fileName .= '.xls';
+		    $fileName = $this->fileName;
+			if (strpos($fileName, '.xlsx') === false)
+				$fileName .= '.xlsx';
 		}
 		return $fileName;
 	}
@@ -562,8 +574,8 @@ class Excel extends \yii\base\Widget
 	public function writeFile($sheet)
 	{
 		if (!isset($this->format))
-			$this->format = 'Excel2007';
-		$objectwriter = \PHPExcel_IOFactory::createWriter($sheet, $this->format);
+			$this->format = 'Xlsx';
+		$objectwriter = \PhpOffice\PhpSpreadsheet\IOFactory::createWriter($sheet, $this->format);
 		$path = 'php://output';
 		if (isset($this->savePath) && $this->savePath != null) {
 			$path = $this->savePath . '/' . $this->getFileName();
@@ -578,8 +590,8 @@ class Excel extends \yii\base\Widget
 	public function readFile($fileName)
 	{
 		if (!isset($this->format))
-			$this->format = \PHPExcel_IOFactory::identify($fileName);
-		$objectreader = \PHPExcel_IOFactory::createReader($this->format);
+			$this->format = \PhpOffice\PhpSpreadsheet\IOFactory::identify($fileName);
+		$objectreader = \PhpOffice\PhpSpreadsheet\IOFactory::createReader($this->format);
 		$objectPhpExcel = $objectreader->load($fileName);
 
 		$sheetCount = $objectPhpExcel->getSheetCount();
@@ -644,8 +656,8 @@ class Excel extends \yii\base\Widget
 	{
 		if ($this->mode == 'export')
 		{
-	    	$sheet = new \PHPExcel();
-
+	    	$sheet = new Spreadsheet();
+	    	
 	    	if (!isset($this->models))
 	    		throw new InvalidConfigException('Config models must be set');
 
