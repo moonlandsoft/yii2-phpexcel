@@ -29,7 +29,7 @@ string|array `$fileName` is a name for file name to export or import. Multiple f
 
 string `$savePath` is a directory to save the file or you can blank this to set the file as attachment.  
 
-string `$format` for excel to export. Valid value are 'Excel5', 'Excel2007', 'Excel2003XML', '00Calc', 'Gnumeric'.  
+string `$format` for excel to export. Valid value are 'Xls','Xlsx','Xml','Ods','Slk','Gnumeric','Csv', and 'Html'.  
 
 boolean `$setFirstTitle` to set the title column on the first line. The columns will have a header on the first line.  
 

@@ -207,7 +207,7 @@ use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
  * If not set, the header will get attributes label of model attributes.
  * @property string|array $fileName is a name for file name to export or import. Multiple file name only use for import mode, not work if you use the export mode.
  * @property string $savePath is a directory to save the file or you can blank this to set the file as attachment.
- * @property string $format for excel to export. Valid value are 'Excel5','Excel2007','Excel2003XML','00Calc','Gnumeric'.
+ * @property string $format for excel to export. Valid value are 'Xls','Xlsx','Xml','Ods','Slk','Gnumeric','Csv', and 'Html'.
  * @property boolean $setFirstTitle to set the title column on the first line. The columns will have a header on the first line.
  * @property boolean $asAttachment to set the file excel to download mode.
  * @property boolean $setFirstRecordAsKeys to set the first record on excel file to a keys of array per line. 
@@ -259,7 +259,7 @@ class Excel extends \yii\base\Widget
 	 */
 	public $savePath;
 	/**
-	 * @var string format for excel to export. Valid value are 'Excel5','Excel2007','Excel2003XML','00Calc','Gnumeric'.
+	 * @var string format for excel to export. Valid value are 'Xls','Xlsx','Xml','Ods','Slk','Gnumeric','Csv', and 'Html'.
 	 */
 	public $format;
 	/**
@@ -508,7 +508,7 @@ class Excel extends \yii\base\Widget
 				}
 			} elseif (is_array($value)) {
 				if (!isset($value['attribute']) && !isset($value['value'])) {
-					throw new InvalidParamException('Attribute or Value must be defined.');
+					throw new \InvalidArgumentException('Attribute or Value must be defined.');
 				}
 				$_columns[$key] = $value;
 			}
@@ -656,37 +656,39 @@ class Excel extends \yii\base\Widget
 	{
 		if ($this->mode == 'export') 
 		{
-	    	$sheet = new Spreadsheet();
-	    	
-	    	if (!isset($this->models))
-	    		throw new InvalidConfigException('Config models must be set');
-	    	
-	    	if (isset($this->properties))
-	    	{
-	    		$this->properties($sheet, $this->properties);
-	    	}
-	    	
-	    	if ($this->isMultipleSheet) {
-	    		$index = 0;
-	    		$worksheet = [];
-	    		foreach ($this->models as $title => $models) {
-	    			$sheet->createSheet($index);
-	    			$sheet->getSheet($index)->setTitle($title);
-	    			$worksheet[$index] = $sheet->getSheet($index);
-	    			$columns = isset($this->columns[$title]) ? $this->columns[$title] : [];
-	    			$headers = isset($this->headers[$title]) ? $this->headers[$title] : [];
-	    			$this->executeColumns($worksheet[$index], $models, $this->populateColumns($columns), $headers);
-	    			$index++;
-	    		}
-	    	} else {
-	    		$worksheet = $sheet->getActiveSheet();
-	    		$this->executeColumns($worksheet, $this->models, isset($this->columns) ? $this->populateColumns($this->columns) : [], isset($this->headers) ? $this->headers : []);
-	    	}
-	    	
-	    	if ($this->asAttachment) {
-	    		$this->setHeaders();
-	    	}
-	    	$this->writeFile($sheet);
+        	    	$sheet = new Spreadsheet();
+        	    	
+        	    	if (!isset($this->models))
+        	    		throw new InvalidConfigException('Config models must be set');
+        	    	
+        	    	if (isset($this->properties))
+        	    	{
+        	    		$this->properties($sheet, $this->properties);
+        	    	}
+        	    	
+        	    	if ($this->isMultipleSheet) {
+        	    		$index = 0;
+        	    		$worksheet = [];
+        	    		foreach ($this->models as $title => $models) {
+        	    			$sheet->createSheet($index);
+        	    			$sheet->getSheet($index)->setTitle($title);
+        	    			$worksheet[$index] = $sheet->getSheet($index);
+        	    			$columns = isset($this->columns[$title]) ? $this->columns[$title] : [];
+        	    			$headers = isset($this->headers[$title]) ? $this->headers[$title] : [];
+        	    			$this->executeColumns($worksheet[$index], $models, $this->populateColumns($columns), $headers);
+        	    			$index++;
+        	    		}
+        	    	} else {
+        	    		$worksheet = $sheet->getActiveSheet();
+        	    		$this->executeColumns($worksheet, $this->models, isset($this->columns) ? $this->populateColumns($this->columns) : [], isset($this->headers) ? $this->headers : []);
+        	    	}
+        	    	
+        	    	if ($this->asAttachment) {
+        	    		$this->setHeaders();
+        	    	}
+	       	$this->writeFile($sheet);
+	       	$sheet->disconnectWorksheets();
+	       	unset($sheet);
 		} 
 		elseif ($this->mode == 'import') 
 		{
