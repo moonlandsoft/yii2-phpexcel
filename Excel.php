@@ -301,6 +301,10 @@ class Excel extends \yii\base\Widget
 	 * instance. If this property is not set, the "formatter" application component will be used.
 	 */
 	public $formatter;
+	/**
+	 * @var boolean define the column autosize
+	 */
+	public $autoSize = false;
 	
 	/**
 	 * (non-PHPdoc)
@@ -390,6 +394,12 @@ class Excel extends \yii\base\Widget
 				$colnum++;
 			}
 			$row++;
+			
+			if($this->autoSize){
+				foreach (range(0, $colnum) as $col) {
+					$activeSheet->getColumnDimensionByColumn($col)->setAutoSize(true);
+				}
+			}
 		}
 	}
 	
