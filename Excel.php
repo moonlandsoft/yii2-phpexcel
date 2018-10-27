@@ -224,6 +224,120 @@ use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
  */
 class Excel extends \yii\base\Widget
 {
+    // Border style
+    const BORDER_NONE = 'none';
+    const BORDER_DASHDOT = 'dashDot';
+    const BORDER_DASHDOTDOT = 'dashDotDot';
+    const BORDER_DASHED = 'dashed';
+    const BORDER_DOTTED = 'dotted';
+    const BORDER_DOUBLE = 'double';
+    const BORDER_HAIR = 'hair';
+    const BORDER_MEDIUM = 'medium';
+    const BORDER_MEDIUMDASHDOT = 'mediumDashDot';
+    const BORDER_MEDIUMDASHDOTDOT = 'mediumDashDotDot';
+    const BORDER_MEDIUMDASHED = 'mediumDashed';
+    const BORDER_SLANTDASHDOT = 'slantDashDot';
+    const BORDER_THICK = 'thick';
+    const BORDER_THIN = 'thin';
+    
+    // Colors
+    const COLOR_BLACK = 'FF000000';
+    const COLOR_WHITE = 'FFFFFFFF';
+    const COLOR_RED = 'FFFF0000';
+    const COLOR_DARKRED = 'FF800000';
+    const COLOR_BLUE = 'FF0000FF';
+    const COLOR_DARKBLUE = 'FF000080';
+    const COLOR_GREEN = 'FF00FF00';
+    const COLOR_DARKGREEN = 'FF008000';
+    const COLOR_YELLOW = 'FFFFFF00';
+    const COLOR_DARKYELLOW = 'FF808000';
+    
+    // Horizontal alignment styles
+    const HORIZONTAL_GENERAL = 'general';
+    const HORIZONTAL_LEFT = 'left';
+    const HORIZONTAL_RIGHT = 'right';
+    const HORIZONTAL_CENTER = 'center';
+    const HORIZONTAL_CENTER_CONTINUOUS = 'centerContinuous';
+    const HORIZONTAL_JUSTIFY = 'justify';
+    const HORIZONTAL_FILL = 'fill';
+    const HORIZONTAL_DISTRIBUTED = 'distributed'; // Excel2007 only
+    
+    // Vertical alignment styles
+    const VERTICAL_BOTTOM = 'bottom';
+    const VERTICAL_TOP = 'top';
+    const VERTICAL_CENTER = 'center';
+    const VERTICAL_JUSTIFY = 'justify';
+    const VERTICAL_DISTRIBUTED = 'distributed'; // Excel2007 only
+    
+    // Read order
+    const READORDER_CONTEXT = 0;
+    const READORDER_LTR = 1;
+    const READORDER_RTL = 2;
+    
+    // Fill types
+    const FILL_NONE = 'none';
+    const FILL_SOLID = 'solid';
+    const FILL_GRADIENT_LINEAR = 'linear';
+    const FILL_GRADIENT_PATH = 'path';
+    const FILL_PATTERN_DARKDOWN = 'darkDown';
+    const FILL_PATTERN_DARKGRAY = 'darkGray';
+    const FILL_PATTERN_DARKGRID = 'darkGrid';
+    const FILL_PATTERN_DARKHORIZONTAL = 'darkHorizontal';
+    const FILL_PATTERN_DARKTRELLIS = 'darkTrellis';
+    const FILL_PATTERN_DARKUP = 'darkUp';
+    const FILL_PATTERN_DARKVERTICAL = 'darkVertical';
+    const FILL_PATTERN_GRAY0625 = 'gray0625';
+    const FILL_PATTERN_GRAY125 = 'gray125';
+    const FILL_PATTERN_LIGHTDOWN = 'lightDown';
+    const FILL_PATTERN_LIGHTGRAY = 'lightGray';
+    const FILL_PATTERN_LIGHTGRID = 'lightGrid';
+    const FILL_PATTERN_LIGHTHORIZONTAL = 'lightHorizontal';
+    const FILL_PATTERN_LIGHTTRELLIS = 'lightTrellis';
+    const FILL_PATTERN_LIGHTUP = 'lightUp';
+    const FILL_PATTERN_LIGHTVERTICAL = 'lightVertical';
+    const FILL_PATTERN_MEDIUMGRAY = 'mediumGray';
+    
+    // Pre-defined formats
+    const FORMAT_GENERAL = 'General';
+    
+    const FORMAT_TEXT = '@';
+    
+    const FORMAT_NUMBER = '0';
+    const FORMAT_NUMBER_00 = '0.00';
+    const FORMAT_NUMBER_COMMA_SEPARATED1 = '#,##0.00';
+    const FORMAT_NUMBER_COMMA_SEPARATED2 = '#,##0.00_-';
+    
+    const FORMAT_PERCENTAGE = '0%';
+    const FORMAT_PERCENTAGE_00 = '0.00%';
+    
+    const FORMAT_DATE_YYYYMMDD2 = 'yyyy-mm-dd';
+    const FORMAT_DATE_YYYYMMDD = 'yy-mm-dd';
+    const FORMAT_DATE_DDMMYYYY = 'dd/mm/yy';
+    const FORMAT_DATE_DMYSLASH = 'd/m/yy';
+    const FORMAT_DATE_DMYMINUS = 'd-m-yy';
+    const FORMAT_DATE_DMMINUS = 'd-m';
+    const FORMAT_DATE_MYMINUS = 'm-yy';
+    const FORMAT_DATE_XLSX14 = 'mm-dd-yy';
+    const FORMAT_DATE_XLSX15 = 'd-mmm-yy';
+    const FORMAT_DATE_XLSX16 = 'd-mmm';
+    const FORMAT_DATE_XLSX17 = 'mmm-yy';
+    const FORMAT_DATE_XLSX22 = 'm/d/yy h:mm';
+    const FORMAT_DATE_DATETIME = 'd/m/yy h:mm';
+    const FORMAT_DATE_TIME1 = 'h:mm AM/PM';
+    const FORMAT_DATE_TIME2 = 'h:mm:ss AM/PM';
+    const FORMAT_DATE_TIME3 = 'h:mm';
+    const FORMAT_DATE_TIME4 = 'h:mm:ss';
+    const FORMAT_DATE_TIME5 = 'mm:ss';
+    const FORMAT_DATE_TIME6 = 'h:mm:ss';
+    const FORMAT_DATE_TIME7 = 'i:s.S';
+    const FORMAT_DATE_TIME8 = 'h:mm:ss;@';
+    const FORMAT_DATE_YYYYMMDDSLASH = 'yy/mm/dd;@';
+    
+    const FORMAT_CURRENCY_USD_SIMPLE = '"$"#,##0.00_-';
+    const FORMAT_CURRENCY_USD = '$#,##0_-';
+    const FORMAT_CURRENCY_EUR_SIMPLE = '#,##0.00_-"€"';
+    const FORMAT_CURRENCY_EUR = '#,##0_-"€"';
+    
 	/**
 	 * @var string mode is an export mode or import mode. valid value are 'export' and 'import'.
 	 */
@@ -269,7 +383,7 @@ class Excel extends \yii\base\Widget
 	/**
 	 * @var boolean to set the file excel to download mode.
 	 */
-	public $asAttachment = true;
+	public $asAttachment = false;
 	/**
 	 * @var boolean to set the first record on excel file to a keys of array per line.
 	 * If you want to set the keys of record column with first record, if it not set, the header with use the alphabet column on excel.
@@ -305,6 +419,14 @@ class Excel extends \yii\base\Widget
 	 * @var boolean define the column autosize
 	 */
 	public $autoSize = false;
+	/**
+	 * @var boolean if true, this writer pre-calculates all formulas in the spreadsheet. This can be slow on large spreadsheets, and maybe even unwanted.
+	 */
+	public $preCalculationFormula = false;
+	/**
+	 * @var boolean Because of a bug in the Office2003 compatibility pack, there can be some small issues when opening Xlsx spreadsheets (mostly related to formula calculation)
+	 */
+	public $compatibilityOffice2003 = false;
   
 	/**
 	 * (non-PHPdoc)
@@ -361,6 +483,8 @@ class Excel extends \yii\base\Widget
 							$header = $headers[$column['attribute']];
 						} elseif (isset($column['attribute'])) {
 							$header = $model->getAttributeLabel($column['attribute']);
+						} elseif (isset($column['cellFormat']) && is_array($column['cellFormat'])) {
+						    $activeSheet->getStyle($col.$row)->applyFromArray($column['cellFormat']);
 						}
 					} else {
 						$header = $model->getAttributeLabel($column);
@@ -386,7 +510,10 @@ class Excel extends \yii\base\Widget
 				}
 				$col .= chr(64+$colnum);
 				if (is_array($column)) {
-					$column_value = $this->executeGetColumnData($model, $column);
+				    $column_value = $this->executeGetColumnData($model, $column);
+				    if (isset($column['cellFormat']) && is_array($column['cellFormat'])) {
+				        $activeSheet->getStyle($col.$row)->applyFromArray($column['cellFormat']);
+				    }
 				} else {
 					$column_value = $this->executeGetColumnData($model, ['attribute' => $column]);
 				}
@@ -580,8 +707,11 @@ class Excel extends \yii\base\Widget
 		if (isset($this->savePath) && $this->savePath != null) {
 			$path = $this->savePath . '/' . $this->getFileName();
 		}
+		$objectwriter->setOffice2003Compatibility($this->compatibilityOffice2003);
+		$objectwriter->setPreCalculateFormulas($this->preCalculationFormula);
 		$objectwriter->save($path);
-		exit();
+		if ($path == 'php://output')
+    		  exit();
 	}
 
 	/**
