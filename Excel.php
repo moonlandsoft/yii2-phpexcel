@@ -324,16 +324,15 @@ class Excel extends \yii\base\Widget
     /**
      * Setting data from models
      */
-    public function executeColumns(&$activeSheet = null, $models, $columns = [], $headers = [])
+    public function executeColumns(&$activeSheet = null, &$models, $columns = [], $headers = [])
     {
-        if ($activeSheet == null) {
+        if ($activeSheet === null) {
             $activeSheet = $this->activeSheet;
         }
         $hasHeader = false;
         $row = 1;
         $char = 26;
         while( ( $model = array_pop( $models ) ) !== null ){
-//        foreach ($models as $model) {
             if (empty($columns)) {
                 $columns = $model->attributes();
             }
@@ -344,7 +343,7 @@ class Excel extends \yii\base\Widget
                 foreach ($columns as $key => $column) {
                     $col = '';
                     if ($colnum > $char) {
-                        $colplus += 1;
+                        $colplus ++;
                         $colnum = 1;
                         $isPlus = true;
                     }
@@ -581,13 +580,13 @@ class Excel extends \yii\base\Widget
     /**
      * saving the xls file to download or to path
      */
-    public function writeFile($sheet)
+    public function writeFile(&$sheet)
     {
         if (!isset($this->format)) {
             $this->format = 'Xlsx';
         }
         $objectwriter = \PhpOffice\PhpSpreadsheet\IOFactory::createWriter($sheet, $this->format);
-        unset($sheet);
+        $sheet = null;
         $path = 'php://output';
         if (isset($this->savePath) && $this->savePath !== null) {
             $path = $this->savePath . '/' . $this->getFileName();
