@@ -332,7 +332,8 @@ class Excel extends \yii\base\Widget
         $hasHeader = false;
         $row = 1;
         $char = 26;
-        foreach ($models as $model) {
+        while( ( $model = array_pop( $models ) ) !== null ){
+//        foreach ($models as $model) {
             if (empty($columns)) {
                 $columns = $model->attributes();
             }
@@ -586,12 +587,14 @@ class Excel extends \yii\base\Widget
             $this->format = 'Xlsx';
         }
         $objectwriter = \PhpOffice\PhpSpreadsheet\IOFactory::createWriter($sheet, $this->format);
+        unset($sheet);
         $path = 'php://output';
         if (isset($this->savePath) && $this->savePath !== null) {
             $path = $this->savePath . '/' . $this->getFileName();
         }
         $objectwriter->save($path);
-        exit();
+        exit;
+
     }
 
     /**
@@ -665,7 +668,7 @@ class Excel extends \yii\base\Widget
      */
     public function run()
     {
-        if ($this->mode == self::EXPORT) {
+        if ($this->mode === self::EXPORT) {
             $sheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
 
             if (!isset($this->models))
