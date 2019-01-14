@@ -427,6 +427,10 @@ class Excel extends \yii\base\Widget
 	 * @var boolean Because of a bug in the Office2003 compatibility pack, there can be some small issues when opening Xlsx spreadsheets (mostly related to formula calculation)
 	 */
 	public $compatibilityOffice2003 = false;
+	/**
+	 * @var custom CSV delimiter for import. Works only with CSV files
+	 */
+	public $CSVDelimiter = ";";
   
 	/**
 	 * (non-PHPdoc)
@@ -722,6 +726,7 @@ class Excel extends \yii\base\Widget
 		if (!isset($this->format))
 			$this->format = \PhpOffice\PhpSpreadsheet\IOFactory::identify($fileName);
 		$objectreader = \PhpOffice\PhpSpreadsheet\IOFactory::createReader($this->format);
+		$objectreader->setDelimiter($this->CSVDelimiter);
 		$objectPhpExcel = $objectreader->load($fileName);
 
 		$sheetCount = $objectPhpExcel->getSheetCount();
