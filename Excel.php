@@ -726,7 +726,9 @@ class Excel extends \yii\base\Widget
 		if (!isset($this->format))
 			$this->format = \PhpOffice\PhpSpreadsheet\IOFactory::identify($fileName);
 		$objectreader = \PhpOffice\PhpSpreadsheet\IOFactory::createReader($this->format);
-		$objectreader->setDelimiter($this->CSVDelimiter);
+		if ($this->format == "Csv") {
+			$objectreader->setDelimiter($this->CSVDelimiter);
+		}
 		$objectPhpExcel = $objectreader->load($fileName);
 
 		$sheetCount = $objectPhpExcel->getSheetCount();
