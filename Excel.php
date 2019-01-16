@@ -431,6 +431,10 @@ class Excel extends \yii\base\Widget
 	 * @var custom CSV delimiter for import. Works only with CSV files
 	 */
 	public $CSVDelimiter = ";";
+	/**
+	 * @var custom CSV encoding for import. Works only with CSV files
+	 */
+	public $CSVEncoding = "UTF-8";
   
 	/**
 	 * (non-PHPdoc)
@@ -728,6 +732,7 @@ class Excel extends \yii\base\Widget
 		$objectreader = \PhpOffice\PhpSpreadsheet\IOFactory::createReader($this->format);
 		if ($this->format == "Csv") {
 			$objectreader->setDelimiter($this->CSVDelimiter);
+			$objectreader->setInputEncoding($this->CSVEncoding);
 		}
 		$objectPhpExcel = $objectreader->load($fileName);
 
