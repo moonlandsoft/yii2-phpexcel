@@ -40,6 +40,12 @@ string `$getOnlySheet` is a sheet name to getting the data. This is only get the
 
 array|Formatter `$formatter` the formatter used to format model attribute values into displayable texts. This can be either an instance of [[Formatter]] or an configuration array for creating the [[Formatter]] instance. If this property is not set, the "formatter" application component will be used.
 
+boolean `$freezeHeader` set freeze header
+
+boolean `$autoFilter` set auto filter to header
+
+array `$headerStyle` header style  in array format for PhpSpreadsheet 
+
 Installation
 ------------
 
@@ -145,10 +151,13 @@ Columns in string mode valid layout are 'attribute:format:header:footer(TODO)'.
       		[
       				'attribute' => 'content',
       				'header' => 'Content Post',
-      				'format' => 'text',
+      				'format' => 'text', // ['decimal',3]
       				'value' => function($model) {
       					return ExampleClass::removeText('example', $model->content);
       				},
+      				'visible' => true,
+      				'autosize' => true,
+      				'format' = 
       		],
       		'like_it:text:Reader like this content',
       		'created_at:datetime',

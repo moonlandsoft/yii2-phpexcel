@@ -2,11 +2,13 @@
 
 namespace moonland\phpexcel;
 
+use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
+use yii\base\Model;
 use yii\helpers\ArrayHelper;
 use yii\base\InvalidConfigException;
 use yii\base\InvalidArgumentException;
 use yii\i18n\Formatter;
-
+use PhpOffice\PhpSpreadsheet\IOFactory;
 
 /**
  * Excel Widget for generate Excel File or for load Excel File.
@@ -95,9 +97,11 @@ use yii\i18n\Formatter;
  *                    'attribute' => 'content',
  *                    'header' => 'Content Post',
  *                    'format' => 'text',
+ *                    'autoSize' => true,
  *                    'value' => function($model) {
  *                        return ExampleClass::removeText('example', $model->content);
  *                    },
+ *                    'visible' => true
  *            ],
  *            'like_it:text:Reader like this content',
  *            'created_at:datetime',
@@ -303,6 +307,30 @@ class Excel extends \yii\base\Widget
     public $formatter;
 
     /**
+     * @var bool freeze header rows
+     */
+    public $freezeHeader = true;
+
+    public $autoFilter = true;
+    public $headerStyle = [
+        'font' => [
+            'bold' => true,
+            'color' => array('rgb' => 'FFFDFE' )
+        ],
+        'alignment' => [
+            'horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER,
+        ],
+        'borders' => [
+            'top' => [
+                'borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN,
+            ],
+        ],
+        'fill' => [
+            'fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
+            'color' => ['rgb' => '7ebf00' ]
+        ],
+    ];
+    /**
      * (non-PHPdoc)
      * @see \yii\base\Object::init()
      */
@@ -323,11 +351,26 @@ class Excel extends \yii\base\Widget
 
     /**
      * Setting data from models
+     *
+     * @param $models
+     * @param array $columns
+     * @param array $headers
+     * @param Worksheet|null $activeSheet
+     * @throws \PhpOffice\PhpSpreadsheet\Exception
      */
-    public function executeColumns(&$activeSheet = null, &$models, $columns = [], $headers = [])
+    private function executeColumns(&$models, $columns = [], $headers = [],Worksheet &$activeSheet = null )
     {
         if ($activeSheet === null) {
             $activeSheet = $this->activeSheet;
+        }
+
+        /**
+         * remove no visible columns
+         */
+        foreach ($columns as $key => $column) {
+            if (is_array($column) && isset($column['visible']) && !$column['visible']) {
+                unset($columns[$key]);
+            }
         }
         $hasHeader = false;
         $row = 1;
@@ -355,7 +398,7 @@ class Excel extends \yii\base\Widget
                     if (is_array($column)) {
                         if (isset($column['header'])) {
                             $header = $column['header'];
-                        } elseif (isset($column['attribute']) && isset($headers[$column['attribute']])) {
+                        } elseif (isset($column['attribute'], $headers[$column['attribute']])) {
                             $header = $headers[$column['attribute']];
                         } elseif (isset($column['attribute'])) {
                             $header = $model->getAttributeLabel($column['attribute']);
@@ -364,7 +407,21 @@ class Excel extends \yii\base\Widget
                         $header = $model->getAttributeLabel($column);
                     }
                     $activeSheet->setCellValue($col . $row, $header);
-                    $colnum++;
+
+                    if (isset($column['attribute'])){
+                        $activeSheet->getColumnDimension($col)->setAutoSize(true);
+                    }
+                    $colnum ++;
+                }
+
+                $activeSheet
+                    ->getStyleByColumnAndRow(1,1, $colnum - 1,$row)
+                    ->applyFromArray($this->headerStyle);
+                if($this->freezeHeader){
+                    $activeSheet->freezePaneByColumnAndRow(1,2);
+                }
+                if($this->autoFilter) {
+                    $activeSheet->setAutoFilterByColumnAndRow(1, 1, $colnum - 1, $row);
                 }
                 $hasHeader = true;
                 $row++;
@@ -389,6 +446,11 @@ class Excel extends \yii\base\Widget
                     $column_value = $this->executeGetColumnData($model, ['attribute' => $column]);
                 }
                 $activeSheet->setCellValue($col . $row, $column_value);
+
+                if(isset($column['format'][0],$column['format'][1]) && $column['format'][0] === 'decimal'){
+                    $format = '0.' . str_repeat('0',$column['format'][1]);
+                    $activeSheet->getStyle($col . $row)->getNumberFormat()->setFormatCode($format);
+                }
                 $colnum++;
             }
             $row++;
@@ -398,9 +460,9 @@ class Excel extends \yii\base\Widget
     /**
      * Setting label or keys on every record if setFirstRecordAsKeys is true.
      * @param array $sheetData
-     * @return multitype:multitype:array
+     * @return array
      */
-    public function executeArrayLabel($sheetData)
+    public function executeArrayLabel($sheetData): array
     {
         $keys = ArrayHelper::remove($sheetData, '1');
 
@@ -419,10 +481,10 @@ class Excel extends \yii\base\Widget
      * @param array $index
      * @return array
      */
-    public function executeLeaveRecords($sheetData = [], $index = [])
+    public function executeLeaveRecords($sheetData = [], $index = []): array
     {
         foreach ($sheetData as $key => $data) {
-            if (in_array($key, $index)) {
+            if (in_array($key, $index, true)) {
                 unset($sheetData[$key]);
             }
         }
@@ -435,7 +497,7 @@ class Excel extends \yii\base\Widget
      * @param array $index
      * @return array
      */
-    public function executeGetOnlyRecords($sheetData = [], $index = [])
+    public function executeGetOnlyRecords($sheetData = [], $index = []): array
     {
         foreach ($sheetData as $key => $data) {
             if (!in_array($key, $index)) {
@@ -464,7 +526,7 @@ class Excel extends \yii\base\Widget
             $value = ArrayHelper::getValue($model, $params['attribute']);
         }
 
-        if (isset($params['format']) && $params['format'] != null) {
+        if (isset($params['format']) && $params['format'] !== null) {
             $value = $this->formatter()->format($value, $params['format']);
         }
 
@@ -475,9 +537,9 @@ class Excel extends \yii\base\Widget
      * Populating columns for checking the column is string or array. if is string this will be checking have a formatter or header.
      * @param array $columns
      * @throws InvalidArgumentException
-     * @return multitype:multitype:array
+     * @return array
      */
-    public function populateColumns($columns = [])
+    public function populateColumns($columns = []): array
     {
         $_columns = [];
         foreach ($columns as $key => $value) {
@@ -507,7 +569,7 @@ class Excel extends \yii\base\Widget
      * Formatter for i18n.
      * @return Formatter
      */
-    public function formatter()
+    public function formatter(): Formatter
     {
         if (!isset($this->formatter)) {
             $this->formatter = \Yii::$app->getFormatter();
@@ -530,7 +592,7 @@ class Excel extends \yii\base\Widget
      * Getting the file name of exporting xls file
      * @return string
      */
-    public function getFileName()
+    public function getFileName(): string
     {
         if (isset($this->fileName)) {
             $fileName = $this->fileName;
@@ -572,39 +634,47 @@ class Excel extends \yii\base\Widget
     public function properties(&$objectExcel, $properties = [])
     {
         foreach ($properties as $key => $value) {
-            $keyname = "set" . ucfirst($key);
+            $keyname = 'set' . ucfirst($key);
             $objectExcel->getProperties()->{$keyname}($value);
         }
     }
 
     /**
      * saving the xls file to download or to path
+     *
+     * @param $sheet
+     * @throws \PhpOffice\PhpSpreadsheet\Writer\Exception
      */
     public function writeFile(&$sheet)
     {
         if (!isset($this->format)) {
             $this->format = 'Xlsx';
         }
-        $objectwriter = \PhpOffice\PhpSpreadsheet\IOFactory::createWriter($sheet, $this->format);
+        $objectWriter = IOFactory::createWriter($sheet, $this->format);
         $sheet = null;
         $path = 'php://output';
         if (isset($this->savePath) && $this->savePath !== null) {
             $path = $this->savePath . '/' . $this->getFileName();
         }
-        $objectwriter->save($path);
+        $objectWriter->save($path);
         exit;
 
     }
 
     /**
      * reading the xls file
+     *
+     * @param $fileName
+     * @return array
+     * @throws \PhpOffice\PhpSpreadsheet\Exception
+     * @throws \PhpOffice\PhpSpreadsheet\Reader\Exception
      */
-    public function readFile($fileName)
+    public function readFile($fileName): array
     {
         if (!isset($this->format)) {
-            $this->format = \PhpOffice\PhpSpreadsheet\IOFactory::identify($fileName);
+            $this->format = IOFactory::identify($fileName);
         }
-        $objectreader = \PhpOffice\PhpSpreadsheet\IOFactory::createReader($this->format);
+        $objectreader = IOFactory::createReader($this->format);
         $objectPhpExcel = $objectreader->load($fileName);
 
         $sheetCount = $objectPhpExcel->getSheetCount();
@@ -630,20 +700,21 @@ class Excel extends \yii\base\Widget
                         $sheetDatas[$indexed] = $this->executeLeaveRecords($sheetDatas[$indexed], $this->leaveRecordByIndex);
                     }
                     return $sheetDatas[$indexed];
-                } else {
-                    $objectPhpExcel->setActiveSheetIndexByName($sheetName);
-                    $indexed = $this->setIndexSheetByName === true ? $sheetName : $sheetIndex;
-                    $sheetDatas[$indexed] = $objectPhpExcel->getActiveSheet()->toArray(null, true, true, true);
-                    if ($this->setFirstRecordAsKeys) {
-                        $sheetDatas[$indexed] = $this->executeArrayLabel($sheetDatas[$indexed]);
-                    }
-                    if (!empty($this->getOnlyRecordByIndex) && isset($this->getOnlyRecordByIndex[$indexed]) && is_array($this->getOnlyRecordByIndex[$indexed])) {
-                        $sheetDatas = $this->executeGetOnlyRecords($sheetDatas, $this->getOnlyRecordByIndex[$indexed]);
-                    }
-                    if (!empty($this->leaveRecordByIndex) && isset($this->leaveRecordByIndex[$indexed]) && is_array($this->leaveRecordByIndex[$indexed])) {
-                        $sheetDatas[$indexed] = $this->executeLeaveRecords($sheetDatas[$indexed], $this->leaveRecordByIndex[$indexed]);
-                    }
                 }
+
+                $objectPhpExcel->setActiveSheetIndexByName($sheetName);
+                $indexed = $this->setIndexSheetByName === true ? $sheetName : $sheetIndex;
+                $sheetDatas[$indexed] = $objectPhpExcel->getActiveSheet()->toArray(null, true, true, true);
+                if ($this->setFirstRecordAsKeys) {
+                    $sheetDatas[$indexed] = $this->executeArrayLabel($sheetDatas[$indexed]);
+                }
+                if (!empty($this->getOnlyRecordByIndex) && isset($this->getOnlyRecordByIndex[$indexed]) && is_array($this->getOnlyRecordByIndex[$indexed])) {
+                    $sheetDatas = $this->executeGetOnlyRecords($sheetDatas, $this->getOnlyRecordByIndex[$indexed]);
+                }
+                if (!empty($this->leaveRecordByIndex) && isset($this->leaveRecordByIndex[$indexed]) && is_array($this->leaveRecordByIndex[$indexed])) {
+                    $sheetDatas[$indexed] = $this->executeLeaveRecords($sheetDatas[$indexed], $this->leaveRecordByIndex[$indexed]);
+                }
+
             }
         } else {
             $sheetDatas = $objectPhpExcel->getActiveSheet()->toArray(null, true, true, true);
@@ -670,8 +741,9 @@ class Excel extends \yii\base\Widget
         if ($this->mode === self::EXPORT) {
             $sheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
 
-            if (!isset($this->models))
+            if (!isset($this->models)) {
                 throw new InvalidConfigException('Config models must be set');
+            }
 
             if (isset($this->properties)) {
                 $this->properties($sheet, $this->properties);
@@ -684,21 +756,23 @@ class Excel extends \yii\base\Widget
                     $sheet->createSheet($index);
                     $sheet->getSheet($index)->setTitle($title);
                     $worksheet[$index] = $sheet->getSheet($index);
-                    $columns = isset($this->columns[$title]) ? $this->columns[$title] : [];
-                    $headers = isset($this->headers[$title]) ? $this->headers[$title] : [];
-                    $this->executeColumns($worksheet[$index], $models, $this->populateColumns($columns), $headers);
+                    $columns = $this->columns[$title] ?? [];
+                    $headers = $this->headers[$title] ?? [];
+                    $this->executeColumns($models, $this->populateColumns($columns), $headers, $worksheet[$index]);
                     $index++;
                 }
             } else {
                 $worksheet = $sheet->getActiveSheet();
-                $this->executeColumns($worksheet, $this->models, isset($this->columns) ? $this->populateColumns($this->columns) : [], isset($this->headers) ? $this->headers : []);
+                $this->executeColumns($this->models,isset($this->columns) ? $this->populateColumns($this->columns) : [], $this->headers ?? [],$worksheet  );
             }
 
             if ($this->asAttachment) {
                 $this->setHeaders();
             }
             $this->writeFile($sheet);
-        } elseif ($this->mode === 'import') {
+            return '';
+        }
+        if ($this->mode === 'import') {
             if (is_array($this->fileName)) {
                 $datas = [];
                 foreach ($this->fileName as $key => $filename) {
@@ -709,6 +783,7 @@ class Excel extends \yii\base\Widget
             return $this->readFile($this->fileName);
 
         }
+        return '';
     }
 
     /**
@@ -761,7 +836,7 @@ class Excel extends \yii\base\Widget
      * @param array $config
      * @return string
      */
-    public static function export($config = [])
+    public static function export($config = []): string
     {
         $config = ArrayHelper::merge(['mode' => self::EXPORT], $config);
         return self::widget($config);
@@ -789,8 +864,9 @@ class Excel extends \yii\base\Widget
     /**
      * @param array $config
      * @return string
+     * @throws InvalidConfigException
      */
-    public static function widget($config = [])
+    public static function widget($config = []): string
     {
         if ($config['mode'] === 'import' && !isset($config['asArray'])) {
             $config['asArray'] = true;
