@@ -378,7 +378,7 @@ class Excel extends \yii\base\Widget
         $hasHeader = false;
         $row = 1;
         $char = 26;
-        while( ( $model = array_pop( $models ) ) !== null ){
+        while( ( $model = array_shift( $models ) ) !== null ){
             if (empty($columns)) {
                 $columns = $model->attributes();
             }
