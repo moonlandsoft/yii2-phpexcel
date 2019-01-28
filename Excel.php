@@ -2,6 +2,7 @@
 
 namespace moonland\phpexcel;
 
+use PhpOffice\PhpSpreadsheet\Style\NumberFormat;
 use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 use yii\base\Model;
 use yii\helpers\ArrayHelper;
@@ -9,6 +10,7 @@ use yii\base\InvalidConfigException;
 use yii\base\InvalidArgumentException;
 use yii\i18n\Formatter;
 use PhpOffice\PhpSpreadsheet\IOFactory;
+
 
 /**
  * Excel Widget for generate Excel File or for load Excel File.
@@ -347,6 +349,7 @@ class Excel extends \yii\base\Widget
         if (!$this->formatter instanceof Formatter) {
             throw new InvalidConfigException('The "formatter" property must be either a Format object or a configuration array.');
         }
+        $this->formatter->nullDisplay = null;
     }
 
     /**
@@ -445,11 +448,30 @@ class Excel extends \yii\base\Widget
                 } else {
                     $column_value = $this->executeGetColumnData($model, ['attribute' => $column]);
                 }
+                if(isset($column['format'])) {
+                    if ($column['format'] === 'date') {
+                        $activeSheet
+                            ->getStyle($col . $row)
+                            ->getNumberFormat()
+                            ->setFormatCode(NumberFormat::FORMAT_DATE_DATETIME);
+                    } elseif ($column['format'] === 'text') {
+                        $activeSheet
+                            ->getStyle($col . $row)
+                            ->getNumberFormat()
+                            ->setFormatCode(NumberFormat::FORMAT_TEXT);
+                    }
+                }
                 $activeSheet->setCellValue($col . $row, $column_value);
 
                 if(isset($column['format'][0],$column['format'][1]) && $column['format'][0] === 'decimal'){
                     $format = '0.' . str_repeat('0',$column['format'][1]);
                     $activeSheet->getStyle($col . $row)->getNumberFormat()->setFormatCode($format);
+                }elseif(isset($column['format']) && $column['format'] === 'date'){
+                    if($this->formatter->dateFormat === 'php:d/m/y'){
+                        $activeSheet
+                            ->getStyle($col . $row)->getNumberFormat()
+                            ->setFormatCode(NumberFormat::FORMAT_DATE_DDMMYYYY);
+                    }
                 }
                 $colnum++;
             }
@@ -508,10 +530,12 @@ class Excel extends \yii\base\Widget
     }
 
     /**
-     * Getting column value.
-     * @param Model $model
+     * Getting column value. 
+     *
+     * @param $model
      * @param array $params
-     * @return Ambigous <NULL, string, mixed>
+     * @return bool|float|mixed|string|null
+     * @throws \Exception
      */
     public function executeGetColumnData($model, $params = [])
     {
@@ -526,8 +550,17 @@ class Excel extends \yii\base\Widget
             $value = ArrayHelper::getValue($model, $params['attribute']);
         }
 
-        if (isset($params['format']) && $params['format'] !== null) {
-            $value = $this->formatter()->format($value, $params['format']);
+        if (isset($params['format'])){
+
+            if($params['format'] === 'date'){
+                if(!$dateTime = \DateTime::createFromFormat('Y-m-d H:i:s', $value . ' 00:00:00', new \DateTimeZone('UTC'))){
+                    return $value;
+                }
+                return \PhpOffice\PhpSpreadsheet\Shared\Date::PHPToExcel($dateTime->getTimestamp());
+            }
+            if($params['format'] !== null){
+                return $this->formatter()->format($value, $params['format']);
+            }
         }
 
         return $value;
