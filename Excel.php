@@ -386,6 +386,7 @@ class Excel extends \yii\base\Widget
                 $isPlus = false;
                 $colplus = 0;
                 $colnum = 1;
+                $col = '';
                 foreach ($columns as $key => $column) {
                     $col = '';
                     if ($colnum > $char) {
@@ -418,13 +419,13 @@ class Excel extends \yii\base\Widget
                 }
 
                 $activeSheet
-                    ->getStyleByColumnAndRow(1,1, $colnum - 1,$row)
+                    ->getStyle('A1:'.$col . $row)
                     ->applyFromArray($this->headerStyle);
                 if($this->freezeHeader){
                     $activeSheet->freezePaneByColumnAndRow(1,2);
                 }
                 if($this->autoFilter) {
-                    $activeSheet->setAutoFilterByColumnAndRow(1, 1, $colnum - 1, $row);
+                    $activeSheet->setAutoFilter('A1:'.$col . $row);
                 }
                 $hasHeader = true;
                 $row++;
