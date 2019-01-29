@@ -103,7 +103,9 @@ use PhpOffice\PhpSpreadsheet\IOFactory;
  *                    'value' => function($model) {
  *                        return ExampleClass::removeText('example', $model->content);
  *                    },
- *                    'visible' => true
+ *                    'visible' => true,
+ *       			  'excelWidth' => 50,
+ *                    'excelWrap' => true
  *            ],
  *            'like_it:text:Reader like this content',
  *            'created_at:datetime',
@@ -412,7 +414,9 @@ class Excel extends \yii\base\Widget
                     }
                     $activeSheet->setCellValue($col . $row, $header);
 
-                    if (isset($column['attribute'])){
+                    if (isset($column['excelWidth'])) {
+                        $activeSheet->getColumnDimension($col)->setWidth($column['excelWidth']);
+                    }elseif (!isset($column['autoSize']) || $column['autoSize']){
                         $activeSheet->getColumnDimension($col)->setAutoSize(true);
                     }
                     $colnum ++;
@@ -474,6 +478,14 @@ class Excel extends \yii\base\Widget
                             ->setFormatCode(NumberFormat::FORMAT_DATE_DDMMYYYY);
                     }
                 }
+                if (isset($column['excelWrap'])) {
+                    $activeSheet
+                        ->getStyle($col . $row)
+                        ->getAlignment()
+                        ->setWrapText($column['excelWrap'])
+                    ;
+                }
+
                 $colnum++;
             }
             $row++;
