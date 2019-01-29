@@ -487,7 +487,11 @@ class Excel extends \yii\base\Widget
 						    $activeSheet->getStyle($col.$row)->applyFromArray($column['cellFormat']);
 						}
 					} else {
-						$header = $model->getAttributeLabel($column);
+						if(isset($headers[$column])) {
+							$header = $headers[$column];
+						} else {
+							$header = $model->getAttributeLabel($column);
+						}
 					}
 					$activeSheet->setCellValue($col.$row,$header);
 					$colnum++;
