@@ -151,13 +151,15 @@ Columns in string mode valid layout are 'attribute:format:header:footer(TODO)'.
       		[
       				'attribute' => 'content',
       				'header' => 'Content Post',
-      				'format' => 'text', // ['decimal',3]
+      				'format' => 'text', // ['decimal',3], 'date'
       				'value' => function($model) {
       					return ExampleClass::removeText('example', $model->content);
       				},
       				'visible' => true,
-      				'autosize' => true,
-      				'format' = 
+      				'autoSize' => true,
+      				'excelWidth' => 50,
+      				'excelWrap' => true
+      				
       		],
       		'like_it:text:Reader like this content',
       		'created_at:datetime',
