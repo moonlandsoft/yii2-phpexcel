@@ -7,7 +7,6 @@ use yii\base\InvalidConfigException;
 use yii\base\InvalidParamException;
 use yii\i18n\Formatter;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
-use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 
 /**
  * Excel Widget for generate Excel File or for load Excel File.
@@ -487,7 +486,14 @@ class Excel extends \yii\base\Widget
 						    $activeSheet->getStyle($col.$row)->applyFromArray($column['cellFormat']);
 						}
 					} else {
-						$header = $model->getAttributeLabel($column);
+					    if(isset($headers[$column])) {
+					        $header = $headers[$column];
+					    } else {
+					        $header = $model->getAttributeLabel($column);
+					    }
+					}
+					if (isset($column['width'])) {
+					    $activeSheet->getColumnDimension(strtoupper($col))->setWidth($column['width']);
 					}
 					$activeSheet->setCellValue($col.$row,$header);
 					$colnum++;
@@ -712,6 +718,8 @@ class Excel extends \yii\base\Widget
 		$objectwriter->save($path);
 		if ($path == 'php://output')
     		  exit();
+		
+    		 return true;
 	}
 
 	/**
