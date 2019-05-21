@@ -594,29 +594,33 @@ class Excel extends Widget
     public function executeGetColumnData($model, $params = [])
     {
         $value = null;
-        if (isset($params['value']) && $params['value'] !== null) {
-            if (is_string($params['value'])) {
-                $value = ArrayHelper::getValue($model, $params['value']);
-            } else {
-                $value = call_user_func($params['value'], $model, $this);
-            }
-        } elseif (isset($params['attribute']) && $params['attribute'] !== null) {
-            $value = ArrayHelper::getValue($model, $params['attribute']);
-        }
-
-        if (isset($params['format'])){
-
-            if($params['format'] === 'date' || ($params['format'][0]??'') === 'date'){
-                if(!$dateTime = DateTime::createFromFormat('Y-m-d H:i:s', $value . ' 00:00:00', new DateTimeZone('UTC'))){
-                    return $value;
+        try {
+            if (isset($params['value']) && $params['value'] !== null) {
+                if (is_string($params['value'])) {
+                    $value = ArrayHelper::getValue($model, $params['value']);
+                } else {
+                    $value = call_user_func($params['value'], $model, $this);
                 }
-                return Date::PHPToExcel($dateTime->getTimestamp());
+            } elseif (isset($params['attribute']) && $params['attribute'] !== null) {
+                $value = ArrayHelper::getValue($model, $params['attribute']);
             }
-            if($params['format'] !== null){
-                return $this->formatter()->format($value, $params['format']);
-            }
-        }
 
+            if (isset($params['format'])) {
+
+                if ($params['format'] === 'date' || ($params['format'][0] ?? '') === 'date') {
+                    if (!$dateTime = DateTime::createFromFormat('Y-m-d H:i:s', $value . ' 00:00:00', new DateTimeZone('UTC'))) {
+                        return $value;
+                    }
+                    return Date::PHPToExcel($dateTime->getTimestamp());
+                }
+                if ($params['format'] !== null) {
+                    return $this->formatter()->format($value, $params['format']);
+                }
+            }
+        }catch (\Exception $exception){
+            Yii::error('Exception:' . $exception->getMessage());
+            return '???';
+        }
         return $value;
     }
 
