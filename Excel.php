@@ -1,10 +1,20 @@
-<?php
+<?php /** @noinspection PhpUndefinedClassInspection */
 
 namespace moonland\phpexcel;
 
+use DateTime;
+use DateTimeZone;
+use PhpOffice\PhpSpreadsheet\Exception;
+use PhpOffice\PhpSpreadsheet\Shared\Date;
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Style\Alignment;
+use PhpOffice\PhpSpreadsheet\Style\Border;
+use PhpOffice\PhpSpreadsheet\Style\Fill;
 use PhpOffice\PhpSpreadsheet\Style\NumberFormat;
 use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
+use Yii;
 use yii\base\Model;
+use yii\base\Widget;
 use yii\helpers\ArrayHelper;
 use yii\base\InvalidConfigException;
 use yii\base\InvalidArgumentException;
@@ -229,7 +239,7 @@ use PhpOffice\PhpSpreadsheet\IOFactory;
  * @copyright 2014
  * @since 1
  */
-class Excel extends \yii\base\Widget
+class Excel extends Widget
 {
     /**
      * @var string mode is an export mode or import mode. valid value are 'export' and 'import'.
@@ -322,15 +332,15 @@ class Excel extends \yii\base\Widget
             'color' => array('rgb' => 'FFFDFE' )
         ],
         'alignment' => [
-            'horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER,
+            'horizontal' => Alignment::HORIZONTAL_CENTER,
         ],
         'borders' => [
             'top' => [
-                'borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN,
+                'borderStyle' => Border::BORDER_THIN,
             ],
         ],
         'fill' => [
-            'fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
+            'fillType' => Fill::FILL_SOLID,
             'color' => ['rgb' => '7ebf00' ]
         ],
     ];
@@ -338,15 +348,15 @@ class Excel extends \yii\base\Widget
      * (non-PHPdoc)
      * @see \yii\base\Object::init()
      */
-    const EXPORT = 'export';
+    public const EXPORT = 'export';
 
     public function init()
     {
         parent::init();
         if ($this->formatter == null) {
-            $this->formatter = \Yii::$app->getFormatter();
+            $this->formatter = Yii::$app->getFormatter();
         } elseif (is_array($this->formatter)) {
-            $this->formatter = \Yii::createObject($this->formatter);
+            $this->formatter = Yii::createObject($this->formatter);
         }
         if (!$this->formatter instanceof Formatter) {
             throw new InvalidConfigException('The "formatter" property must be either a Format object or a configuration array.');
@@ -361,9 +371,9 @@ class Excel extends \yii\base\Widget
      * @param array $columns
      * @param array $headers
      * @param Worksheet|null $activeSheet
-     * @throws \PhpOffice\PhpSpreadsheet\Exception
+     * @throws Exception
      */
-    private function executeColumns(&$models, $columns = [], $headers = [],Worksheet &$activeSheet = null )
+    private function executeColumns(&$models, $columns = [], $headers = [],Worksheet &$activeSheet = null ): void
     {
         if ($activeSheet === null) {
             $activeSheet = $this->activeSheet;
@@ -566,10 +576,10 @@ class Excel extends \yii\base\Widget
         if (isset($params['format'])){
 
             if($params['format'] === 'date'){
-                if(!$dateTime = \DateTime::createFromFormat('Y-m-d H:i:s', $value . ' 00:00:00', new \DateTimeZone('UTC'))){
+                if(!$dateTime = DateTime::createFromFormat('Y-m-d H:i:s', $value . ' 00:00:00', new DateTimeZone('UTC'))){
                     return $value;
                 }
-                return \PhpOffice\PhpSpreadsheet\Shared\Date::PHPToExcel($dateTime->getTimestamp());
+                return Date::PHPToExcel($dateTime->getTimestamp());
             }
             if($params['format'] !== null){
                 return $this->formatter()->format($value, $params['format']);
@@ -618,7 +628,7 @@ class Excel extends \yii\base\Widget
     public function formatter(): Formatter
     {
         if (!isset($this->formatter)) {
-            $this->formatter = \Yii::$app->getFormatter();
+            $this->formatter = Yii::$app->getFormatter();
         }
 
         return $this->formatter;
@@ -627,7 +637,7 @@ class Excel extends \yii\base\Widget
     /**
      * Setting header to download generated file xls
      */
-    public function setHeaders()
+    public function setHeaders(): void
     {
         header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
         header('Content-Disposition: attachment;filename="' . $this->getFileName() . '"');
@@ -640,11 +650,7 @@ class Excel extends \yii\base\Widget
      */
     public function getFileName(): string
     {
-        if (isset($this->fileName)) {
-            $fileName = $this->fileName;
-        } else {
-            $fileName = 'exports';
-        }
+        $fileName = $this->fileName ?? 'exports';
 
         $pathinfo = pathinfo($this->fileName);
         if (!isset($pathinfo['extension'])) {
@@ -674,10 +680,10 @@ class Excel extends \yii\base\Widget
 
     /**
      * Setting properties for excel file
-     * @param \PhpOffice\PhpSpreadsheet\Spreadsheet $objectExcel
+     * @param Spreadsheet $objectExcel
      * @param array $properties
      */
-    public function properties(&$objectExcel, $properties = [])
+    public function properties(&$objectExcel, $properties = []): void
     {
         foreach ($properties as $key => $value) {
             $keyname = 'set' . ucfirst($key);
@@ -691,7 +697,7 @@ class Excel extends \yii\base\Widget
      * @param $sheet
      * @throws \PhpOffice\PhpSpreadsheet\Writer\Exception
      */
-    public function writeFile(&$sheet)
+    public function writeFile(&$sheet): void
     {
         if (!isset($this->format)) {
             $this->format = 'Xlsx';
@@ -712,7 +718,7 @@ class Excel extends \yii\base\Widget
      *
      * @param $fileName
      * @return array
-     * @throws \PhpOffice\PhpSpreadsheet\Exception
+     * @throws Exception
      * @throws \PhpOffice\PhpSpreadsheet\Reader\Exception
      */
     public function readFile($fileName): array
@@ -785,7 +791,7 @@ class Excel extends \yii\base\Widget
     public function run()
     {
         if ($this->mode === self::EXPORT) {
-            $sheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
+            $sheet = new Spreadsheet();
 
             if (!isset($this->models)) {
                 throw new InvalidConfigException('Config models must be set');
@@ -901,7 +907,7 @@ class Excel extends \yii\base\Widget
      * @param array $config is a more configuration.
      * @return string
      */
-    public static function import($fileName, $config = [])
+    public static function import($fileName, $config = []): string
     {
         $config = ArrayHelper::merge(['mode' => 'import', 'fileName' => $fileName, 'asArray' => true], $config);
         return self::widget($config);
@@ -919,8 +925,8 @@ class Excel extends \yii\base\Widget
         }
 
         if (isset($config['asArray']) && $config['asArray'] === true) {
-            $config['class'] = get_called_class();
-            $widget = \Yii::createObject($config);
+            $config['class'] = static::class;
+            $widget = Yii::createObject($config);
             return $widget->run();
         }
 
