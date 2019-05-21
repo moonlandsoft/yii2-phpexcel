@@ -2,9 +2,19 @@
 
 namespace moonland\phpexcel;
 
+use DateTime;
+use DateTimeZone;
+use PhpOffice\PhpSpreadsheet\Reader\Exception;
+use PhpOffice\PhpSpreadsheet\Shared\Date;
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Style\Alignment;
+use PhpOffice\PhpSpreadsheet\Style\Border;
+use PhpOffice\PhpSpreadsheet\Style\Fill;
 use PhpOffice\PhpSpreadsheet\Style\NumberFormat;
 use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
+use Yii;
 use yii\base\Model;
+use yii\base\Widget;
 use yii\helpers\ArrayHelper;
 use yii\base\InvalidConfigException;
 use yii\base\InvalidArgumentException;
@@ -229,7 +239,7 @@ use PhpOffice\PhpSpreadsheet\IOFactory;
  * @copyright 2014
  * @since 1
  */
-class Excel extends \yii\base\Widget
+class Excel extends Widget
 {
     /**
      * @var string mode is an export mode or import mode. valid value are 'export' and 'import'.
@@ -310,6 +320,9 @@ class Excel extends \yii\base\Widget
      */
     public $formatter;
 
+    public $decimalSeparator = '.';
+
+    public $thousandSeparator = '';
     /**
      * @var bool freeze header rows
      */
@@ -322,15 +335,15 @@ class Excel extends \yii\base\Widget
             'color' => array('rgb' => 'FFFDFE' )
         ],
         'alignment' => [
-            'horizontal' => \PhpOffice\PhpSpreadsheet\Style\Alignment::HORIZONTAL_CENTER,
+            'horizontal' => Alignment::HORIZONTAL_CENTER,
         ],
         'borders' => [
             'top' => [
-                'borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN,
+                'borderStyle' => Border::BORDER_THIN,
             ],
         ],
         'fill' => [
-            'fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
+            'fillType' => Fill::FILL_SOLID,
             'color' => ['rgb' => '7ebf00' ]
         ],
     ];
@@ -344,14 +357,16 @@ class Excel extends \yii\base\Widget
     {
         parent::init();
         if ($this->formatter == null) {
-            $this->formatter = \Yii::$app->getFormatter();
+            $this->formatter = Yii::$app->getFormatter();
         } elseif (is_array($this->formatter)) {
-            $this->formatter = \Yii::createObject($this->formatter);
+            $this->formatter = Yii::createObject($this->formatter);
         }
         if (!$this->formatter instanceof Formatter) {
             throw new InvalidConfigException('The "formatter" property must be either a Format object or a configuration array.');
         }
         $this->formatter->nullDisplay = null;
+        $this->formatter->decimalSeparator = $this->decimalSeparator;
+        $this->formatter->thousandSeparator = $this->thousandSeparator;
     }
 
     /**
@@ -454,28 +469,54 @@ class Excel extends \yii\base\Widget
                     $column_value = $this->executeGetColumnData($model, ['attribute' => $column]);
                 }
                 if(isset($column['format'])) {
-                    if ($column['format'] === 'date') {
-                        $activeSheet
-                            ->getStyle($col . $row)
-                            ->getNumberFormat()
-                            ->setFormatCode(NumberFormat::FORMAT_DATE_DATETIME);
-                    } elseif ($column['format'] === 'text') {
-                        $activeSheet
-                            ->getStyle($col . $row)
-                            ->getNumberFormat()
-                            ->setFormatCode(NumberFormat::FORMAT_TEXT);
+
+                    $formatOptions = [];
+                    if(is_array($column['format'])){
+                        $format = array_shift($column['format']);
+                        $formatOptions = $column['format'];
+                    }else{
+                        $format = $column['format'];
+                    }
+                    switch ($format){
+                        case 'date':
+                            $activeSheet
+                                ->getStyle($col . $row)
+                                ->getNumberFormat()
+                                ->setFormatCode(NumberFormat::FORMAT_DATE_DATETIME);
+                            break;
+                        case 'text':
+                            $activeSheet
+                                ->getStyle($col . $row)
+                                ->getNumberFormat()
+                                ->setFormatCode(NumberFormat::FORMAT_TEXT);
+                            break;
+
                     }
                 }
-                $activeSheet->setCellValue($col . $row, $column_value);
 
-                if(isset($column['format'][0],$column['format'][1]) && $column['format'][0] === 'decimal'){
-                    $format = '0.' . str_repeat('0',$column['format'][1]);
-                    $activeSheet->getStyle($col . $row)->getNumberFormat()->setFormatCode($format);
-                }elseif(isset($column['format']) && $column['format'] === 'date'){
-                    if($this->formatter->dateFormat === 'php:d/m/y'){
-                        $activeSheet
-                            ->getStyle($col . $row)->getNumberFormat()
-                            ->setFormatCode(NumberFormat::FORMAT_DATE_DDMMYYYY);
+                $activeSheet->setCellValue($col . $row, $column_value);
+                if(isset($format)) {
+                    switch ($format) {
+                        case 'date':
+                            $dateFormat = NumberFormat::FORMAT_DATE_DATETIME;
+                            if ($formatOptions) {
+                                $dateFormat = $formatOptions[0];
+                            }
+                            $activeSheet
+                                ->getStyle($col . $row)
+                                ->getNumberFormat()
+                                ->setFormatCode($dateFormat);
+                            break;
+                        case 'decimal':
+                            $decimalFormat = NumberFormat::FORMAT_NUMBER_00;
+                            if ($formatOptions) {
+                                $decimalFormat = '0.' . str_repeat('0', $formatOptions[0]);
+                            }
+                            $activeSheet->getStyle($col . $row)
+                                ->getNumberFormat()
+                                ->setFormatCode($decimalFormat);
+                            break;
+
                     }
                 }
                 if (isset($column['excelWrap'])) {
@@ -565,11 +606,11 @@ class Excel extends \yii\base\Widget
 
         if (isset($params['format'])){
 
-            if($params['format'] === 'date'){
-                if(!$dateTime = \DateTime::createFromFormat('Y-m-d H:i:s', $value . ' 00:00:00', new \DateTimeZone('UTC'))){
+            if($params['format'] === 'date' || ($params['format'][0]??'') === 'date'){
+                if(!$dateTime = DateTime::createFromFormat('Y-m-d H:i:s', $value . ' 00:00:00', new DateTimeZone('UTC'))){
                     return $value;
                 }
-                return \PhpOffice\PhpSpreadsheet\Shared\Date::PHPToExcel($dateTime->getTimestamp());
+                return Date::PHPToExcel($dateTime->getTimestamp());
             }
             if($params['format'] !== null){
                 return $this->formatter()->format($value, $params['format']);
@@ -618,7 +659,7 @@ class Excel extends \yii\base\Widget
     public function formatter(): Formatter
     {
         if (!isset($this->formatter)) {
-            $this->formatter = \Yii::$app->getFormatter();
+            $this->formatter = Yii::$app->getFormatter();
         }
 
         return $this->formatter;
@@ -674,7 +715,7 @@ class Excel extends \yii\base\Widget
 
     /**
      * Setting properties for excel file
-     * @param \PhpOffice\PhpSpreadsheet\Spreadsheet $objectExcel
+     * @param Spreadsheet $objectExcel
      * @param array $properties
      */
     public function properties(&$objectExcel, $properties = [])
@@ -713,7 +754,7 @@ class Excel extends \yii\base\Widget
      * @param $fileName
      * @return array
      * @throws \PhpOffice\PhpSpreadsheet\Exception
-     * @throws \PhpOffice\PhpSpreadsheet\Reader\Exception
+     * @throws Exception
      */
     public function readFile($fileName): array
     {
@@ -785,7 +826,7 @@ class Excel extends \yii\base\Widget
     public function run()
     {
         if ($this->mode === self::EXPORT) {
-            $sheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
+            $sheet = new Spreadsheet();
 
             if (!isset($this->models)) {
                 throw new InvalidConfigException('Config models must be set');
@@ -920,7 +961,7 @@ class Excel extends \yii\base\Widget
 
         if (isset($config['asArray']) && $config['asArray'] === true) {
             $config['class'] = get_called_class();
-            $widget = \Yii::createObject($config);
+            $widget = Yii::createObject($config);
             return $widget->run();
         }
 
