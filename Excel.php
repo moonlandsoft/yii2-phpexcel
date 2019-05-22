@@ -4,7 +4,7 @@ namespace moonland\phpexcel;
 
 use DateTime;
 use DateTimeZone;
-use PhpOffice\PhpSpreadsheet\Exception;
+use PhpOffice\PhpSpreadsheet\Reader\Exception;
 use PhpOffice\PhpSpreadsheet\Shared\Date;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Style\Alignment;
@@ -320,6 +320,14 @@ class Excel extends Widget
      */
     public $formatter;
 
+    public $decimalSeparator;
+
+    public $thousandSeparator;
+
+    /**
+     * @var string format in excel style
+     */
+    public $dateFormat  = 'dd/mm/yy';
     /**
      * @var bool freeze header rows
      */
@@ -362,6 +370,13 @@ class Excel extends Widget
             throw new InvalidConfigException('The "formatter" property must be either a Format object or a configuration array.');
         }
         $this->formatter->nullDisplay = null;
+
+        if($this->decimalSeparator!==null) {
+            $this->formatter->decimalSeparator = $this->decimalSeparator;
+        }
+        if($this->thousandSeparator !== null) {
+            $this->formatter->thousandSeparator = $this->thousandSeparator;
+        }
     }
 
     /**
@@ -371,7 +386,7 @@ class Excel extends Widget
      * @param array $columns
      * @param array $headers
      * @param Worksheet|null $activeSheet
-     * @throws Exception
+     * @throws \PhpOffice\PhpSpreadsheet\Exception
      */
     private function executeColumns(&$models, $columns = [], $headers = [],Worksheet &$activeSheet = null ): void
     {
@@ -431,10 +446,11 @@ class Excel extends Widget
                     }
                     $colnum ++;
                 }
-
-                $activeSheet
-                    ->getStyle('A1:'.$col . $row)
-                    ->applyFromArray($this->headerStyle);
+                if($this->headerStyle) {
+                    $activeSheet
+                        ->getStyle('A1:' . $col . $row)
+                        ->applyFromArray($this->headerStyle);
+                }
                 if($this->freezeHeader){
                     $activeSheet->freezePaneByColumnAndRow(1,2);
                 }
@@ -464,30 +480,41 @@ class Excel extends Widget
                     $column_value = $this->executeGetColumnData($model, ['attribute' => $column]);
                 }
                 if(isset($column['format'])) {
-                    if ($column['format'] === 'date') {
-                        $activeSheet
-                            ->getStyle($col . $row)
-                            ->getNumberFormat()
-                            ->setFormatCode(NumberFormat::FORMAT_DATE_DATETIME);
-                    } elseif ($column['format'] === 'text') {
-                        $activeSheet
-                            ->getStyle($col . $row)
-                            ->getNumberFormat()
-                            ->setFormatCode(NumberFormat::FORMAT_TEXT);
+
+                    $formatOptions = [];
+                    if(is_array($column['format'])){
+                        $format = array_shift($column['format']);
+                        $formatOptions = $column['format'];
+                    }else{
+                        $format = $column['format'];
+                    }
+                    switch ($format){
+                        case 'date':
+                            $activeSheet
+                                ->getStyle($col . $row)
+                                ->getNumberFormat()
+                                ->setFormatCode($this->dateFormat);
+                            break;
+                        case 'text':
+                            $activeSheet
+                                ->getStyle($col . $row)
+                                ->getNumberFormat()
+                                ->setFormatCode(NumberFormat::FORMAT_TEXT);
+                            break;
+                        case 'decimal':
+                            $decimalFormat = NumberFormat::FORMAT_NUMBER_00;
+                            if ($formatOptions) {
+                                $decimalFormat = '0.' . str_repeat('0', $formatOptions[0]);
+                            }
+                            $activeSheet->getStyle($col . $row)
+                                ->getNumberFormat()
+                                ->setFormatCode($decimalFormat);
+                            break;
                     }
                 }
+
                 $activeSheet->setCellValue($col . $row, $column_value);
 
-                if(isset($column['format'][0],$column['format'][1]) && $column['format'][0] === 'decimal'){
-                    $format = '0.' . str_repeat('0',$column['format'][1]);
-                    $activeSheet->getStyle($col . $row)->getNumberFormat()->setFormatCode($format);
-                }elseif(isset($column['format']) && $column['format'] === 'date'){
-                    if($this->formatter->dateFormat === 'php:d/m/y'){
-                        $activeSheet
-                            ->getStyle($col . $row)->getNumberFormat()
-                            ->setFormatCode(NumberFormat::FORMAT_DATE_DDMMYYYY);
-                    }
-                }
                 if (isset($column['excelWrap'])) {
                     $activeSheet
                         ->getStyle($col . $row)
@@ -563,29 +590,33 @@ class Excel extends Widget
     public function executeGetColumnData($model, $params = [])
     {
         $value = null;
-        if (isset($params['value']) && $params['value'] !== null) {
-            if (is_string($params['value'])) {
-                $value = ArrayHelper::getValue($model, $params['value']);
-            } else {
-                $value = call_user_func($params['value'], $model, $this);
-            }
-        } elseif (isset($params['attribute']) && $params['attribute'] !== null) {
-            $value = ArrayHelper::getValue($model, $params['attribute']);
-        }
-
-        if (isset($params['format'])){
-
-            if($params['format'] === 'date'){
-                if(!$dateTime = DateTime::createFromFormat('Y-m-d H:i:s', $value . ' 00:00:00', new DateTimeZone('UTC'))){
-                    return $value;
+        try {
+            if (isset($params['value']) && $params['value'] !== null) {
+                if (is_string($params['value'])) {
+                    $value = ArrayHelper::getValue($model, $params['value']);
+                } else {
+                    $value = call_user_func($params['value'], $model, $this);
                 }
-                return Date::PHPToExcel($dateTime->getTimestamp());
+            } elseif (isset($params['attribute']) && $params['attribute'] !== null) {
+                $value = ArrayHelper::getValue($model, $params['attribute']);
             }
-            if($params['format'] !== null){
-                return $this->formatter()->format($value, $params['format']);
-            }
-        }
 
+            if (isset($params['format'])) {
+
+                if ($params['format'] === 'date' || ($params['format'][0] ?? '') === 'date') {
+                    if (!$dateTime = DateTime::createFromFormat('Y-m-d H:i:s', $value . ' 00:00:00', new DateTimeZone('UTC'))) {
+                        return $value;
+                    }
+                    return Date::PHPToExcel($dateTime->getTimestamp());
+                }
+                if ($params['format'] !== null) {
+                    return $this->formatter()->format($value, $params['format']);
+                }
+            }
+        }catch (\Exception $exception){
+            Yii::error('Exception:' . $exception->getMessage());
+            return '???';
+        }
         return $value;
     }
 
@@ -718,8 +749,8 @@ class Excel extends Widget
      *
      * @param $fileName
      * @return array
+     * @throws \PhpOffice\PhpSpreadsheet\Exception
      * @throws Exception
-     * @throws \PhpOffice\PhpSpreadsheet\Reader\Exception
      */
     public function readFile($fileName): array
     {
