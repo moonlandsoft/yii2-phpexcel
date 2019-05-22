@@ -320,9 +320,14 @@ class Excel extends Widget
      */
     public $formatter;
 
-    public $decimalSeparator = '.';
+    public $decimalSeparator;
 
-    public $thousandSeparator = '';
+    public $thousandSeparator;
+
+    /**
+     * @var string format in excel style
+     */
+    public $dateFormat  = 'dd/mm/yy';
     /**
      * @var bool freeze header rows
      */
@@ -365,8 +370,13 @@ class Excel extends Widget
             throw new InvalidConfigException('The "formatter" property must be either a Format object or a configuration array.');
         }
         $this->formatter->nullDisplay = null;
-        $this->formatter->decimalSeparator = $this->decimalSeparator;
-        $this->formatter->thousandSeparator = $this->thousandSeparator;
+
+        if($this->decimalSeparator!==null) {
+            $this->formatter->decimalSeparator = $this->decimalSeparator;
+        }
+        if($this->thousandSeparator !== null) {
+            $this->formatter->thousandSeparator = $this->thousandSeparator;
+        }
     }
 
     /**
@@ -436,10 +446,11 @@ class Excel extends Widget
                     }
                     $colnum ++;
                 }
-
-                $activeSheet
-                    ->getStyle('A1:'.$col . $row)
-                    ->applyFromArray($this->headerStyle);
+                if($this->headerStyle) {
+                    $activeSheet
+                        ->getStyle('A1:' . $col . $row)
+                        ->applyFromArray($this->headerStyle);
+                }
                 if($this->freezeHeader){
                     $activeSheet->freezePaneByColumnAndRow(1,2);
                 }
@@ -482,30 +493,13 @@ class Excel extends Widget
                             $activeSheet
                                 ->getStyle($col . $row)
                                 ->getNumberFormat()
-                                ->setFormatCode(NumberFormat::FORMAT_DATE_DATETIME);
+                                ->setFormatCode($this->dateFormat);
                             break;
                         case 'text':
                             $activeSheet
                                 ->getStyle($col . $row)
                                 ->getNumberFormat()
                                 ->setFormatCode(NumberFormat::FORMAT_TEXT);
-                            break;
-
-                    }
-                }
-
-                $activeSheet->setCellValue($col . $row, $column_value);
-                if(isset($format)) {
-                    switch ($format) {
-                        case 'date':
-                            $dateFormat = NumberFormat::FORMAT_DATE_DATETIME;
-                            if ($formatOptions) {
-                                $dateFormat = $formatOptions[0];
-                            }
-                            $activeSheet
-                                ->getStyle($col . $row)
-                                ->getNumberFormat()
-                                ->setFormatCode($dateFormat);
                             break;
                         case 'decimal':
                             $decimalFormat = NumberFormat::FORMAT_NUMBER_00;
@@ -516,9 +510,11 @@ class Excel extends Widget
                                 ->getNumberFormat()
                                 ->setFormatCode($decimalFormat);
                             break;
-
                     }
                 }
+
+                $activeSheet->setCellValue($col . $row, $column_value);
+
                 if (isset($column['excelWrap'])) {
                     $activeSheet
                         ->getStyle($col . $row)
