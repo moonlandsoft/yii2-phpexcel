@@ -358,6 +358,11 @@ class Excel extends Widget
      */
     public const EXPORT = 'export';
 
+
+
+    /** @var int  */
+    public $tableStartRow = 1;
+
     public function init()
     {
         parent::init();
@@ -403,7 +408,7 @@ class Excel extends Widget
             }
         }
         $hasHeader = false;
-        $row = 1;
+        $row = $this->tableStartRow;
         $char = 26;
         while( ( $model = array_shift( $models ) ) !== null ){
             if (empty($columns)) {
@@ -444,6 +449,13 @@ class Excel extends Widget
                     }elseif (!isset($column['autoSize']) || $column['autoSize']){
                         $activeSheet->getColumnDimension($col)->setAutoSize(true);
                     }
+                    if (isset($column['excelWrap'])) {
+                        $activeSheet
+                            ->getStyle($col . $row)
+                            ->getAlignment()
+                            ->setWrapText($column['excelWrap'])
+                        ;
+                    }
                     $colnum ++;
                 }
                 if($this->headerStyle) {
@@ -479,16 +491,15 @@ class Excel extends Widget
                 } else {
                     $column_value = $this->executeGetColumnData($model, ['attribute' => $column]);
                 }
-                if(isset($column['format'])) {
-
+                if (isset($column['format'])) {
                     $formatOptions = [];
-                    if(is_array($column['format'])){
+                    if (is_array($column['format'])) {
                         $format = array_shift($column['format']);
                         $formatOptions = $column['format'];
-                    }else{
+                    } else {
                         $format = $column['format'];
                     }
-                    switch ($format){
+                    switch ($format) {
                         case 'date':
                             $activeSheet
                                 ->getStyle($col . $row)
@@ -604,7 +615,13 @@ class Excel extends Widget
             if (isset($params['format'])) {
 
                 if ($params['format'] === 'date' || ($params['format'][0] ?? '') === 'date') {
-                    if (!$dateTime = DateTime::createFromFormat('Y-m-d H:i:s', $value . ' 00:00:00', new DateTimeZone('UTC'))) {
+                    /**
+                     * if date without time, add 00:00:00 as time
+                     */
+                    if (strlen($value)=== '10') {
+                        $value .= ' 00:00:00';
+                    }
+                    if (!$dateTime = DateTime::createFromFormat('Y-m-d H:i:s', $value, new DateTimeZone('UTC'))) {
                         return $value;
                     }
                     return Date::PHPToExcel($dateTime->getTimestamp());
