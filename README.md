@@ -244,6 +244,46 @@ Array([file1] => Array([Sheet1] => Array([0] => Array([name] => Anam, [email] =>
 
 ```
 
+With title
+----------
+
+```php
+$labels = [
+    [
+        'label' => 'Pārskats',
+        'class' => 'title'
+    ],
+];
+
+
+$title = new TableTdCell('title');
+$title->class = 'title';
+$title->colspan = 11;
+
+$titleClassStyle = [
+    'title' => [
+        'font' => [
+            'size' => 16,
+        ],
+        'alignment' => [
+            'horizontal' => 'center',
+        ],
+    ],
+];
+
+Excel::widget([
+    'models' => $dataProvider->getModels(),
+    'mode' => 'export', //default value as 'export'
+    'fileName' => 'month_total_' . date('ymdHi'),
+    'columns' => $columns,
+    //'' => 'LSEZ SIA "Ekers Stividors LP", BMZ apl.  Nr. 40',
+    //'headers' => $headers
+    'titleRows' => [[$title]],
+    'loadDataInExcelStyle' => $titleClassStyle
+]);
+
+```
+
 TODO
 ----
 - Adding footer params for columns in exporting data.

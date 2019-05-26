@@ -21,7 +21,6 @@ use yii\base\InvalidArgumentException;
 use yii\i18n\Formatter;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 
-
 /**
  * Excel Widget for generate Excel File or for load Excel File.
  *
@@ -358,10 +357,21 @@ class Excel extends Widget
      */
     public const EXPORT = 'export';
 
-
+    /** @var int  */
+    public $titleStartRow;
 
     /** @var int  */
-    public $tableStartRow = 1;
+    public $tableStartRow;
+
+    /** @var int  */
+    private $_lastRow;
+
+    /** @var array array[] */
+    public $titleRows = [];
+
+    /** @var array  */
+    public $loadDataInExcelStyle = [];
+
 
     public function init()
     {
@@ -376,12 +386,28 @@ class Excel extends Widget
         }
         $this->formatter->nullDisplay = null;
 
-        if($this->decimalSeparator!==null) {
+        if ($this->decimalSeparator!==null) {
             $this->formatter->decimalSeparator = $this->decimalSeparator;
         }
-        if($this->thousandSeparator !== null) {
+        if ($this->thousandSeparator !== null) {
             $this->formatter->thousandSeparator = $this->thousandSeparator;
         }
+    }
+
+    public function getTitleStartRow()
+    {
+        if ($this->titleStartRow === null) {
+            $this->titleStartRow = 1;
+        }
+        return $this->titleStartRow;
+    }
+
+    public function getTableStartRow(): int
+    {
+        if ($this->tableStartRow === null) {
+            $this->tableStartRow = $this->_lastRow + 1;
+        }
+        return $this->tableStartRow;
     }
 
     /**
@@ -408,7 +434,7 @@ class Excel extends Widget
             }
         }
         $hasHeader = false;
-        $row = $this->tableStartRow;
+        $row = $this->getTableStartRow();
         $char = 26;
         while( ( $model = array_shift( $models ) ) !== null ){
             if (empty($columns)) {
@@ -446,7 +472,7 @@ class Excel extends Widget
 
                     if (isset($column['excelWidth'])) {
                         $activeSheet->getColumnDimension($col)->setWidth($column['excelWidth']);
-                    }elseif (!isset($column['autoSize']) || $column['autoSize']){
+                    } elseif (!isset($column['autoSize']) || $column['autoSize']) {
                         $activeSheet->getColumnDimension($col)->setAutoSize(true);
                     }
                     if (isset($column['excelWrap'])) {
@@ -458,19 +484,20 @@ class Excel extends Widget
                     }
                     $colnum ++;
                 }
-                if($this->headerStyle) {
+                if ($this->headerStyle) {
                     $activeSheet
-                        ->getStyle('A1:' . $col . $row)
+                        ->getStyle('A' . $row . ':' . $col . $row)
                         ->applyFromArray($this->headerStyle);
                 }
-                if($this->freezeHeader){
-                    $activeSheet->freezePaneByColumnAndRow(1,2);
+                if ($this->freezeHeader) {
+                    $activeSheet->freezePaneByColumnAndRow(1, 2);
                 }
-                if($this->autoFilter) {
-                    $activeSheet->setAutoFilter('A1:'.$col . $row);
+                if ($this->autoFilter) {
+                    $activeSheet->setAutoFilter('A' . $row . ':' . $col . $row);
                 }
                 $hasHeader = true;
                 $row++;
+                $this->_lastRow++;
             }
             $isPlus = false;
             $colplus = 0;
@@ -537,6 +564,7 @@ class Excel extends Widget
                 $colnum++;
             }
             $row++;
+            $this->_lastRow ++;
         }
     }
 
@@ -613,7 +641,6 @@ class Excel extends Widget
             }
 
             if (isset($params['format'])) {
-
                 if ($params['format'] === 'date' || ($params['format'][0] ?? '') === 'date') {
                     /**
                      * if date without time, add 00:00:00 as time
@@ -630,7 +657,7 @@ class Excel extends Widget
                     return $this->formatter()->format($value, $params['format']);
                 }
             }
-        }catch (\Exception $exception){
+        }catch (\Exception $exception) {
             Yii::error('Exception:' . $exception->getMessage());
             return '???';
         }
@@ -698,7 +725,10 @@ class Excel extends Widget
      */
     public function getFileName(): string
     {
-        $fileName = $this->fileName ?? 'exports';
+        $fileName = 'exports';
+        if ($this->fileName && is_string($this->fileName)) {
+            $fileName = $this->fileName;
+        }
 
         $pathinfo = pathinfo($this->fileName);
         if (!isset($pathinfo['extension'])) {
@@ -832,9 +862,15 @@ class Excel extends Widget
         return $sheetDatas;
     }
 
+
+
     /**
-     * (non-PHPdoc)
      * @see \yii\base\Widget::run()
+     * @return array|string
+     * @throws Exception
+     * @throws InvalidConfigException
+     * @throws \PhpOffice\PhpSpreadsheet\Exception
+     * @throws \PhpOffice\PhpSpreadsheet\Writer\Exception
      */
     public function run()
     {
@@ -863,7 +899,8 @@ class Excel extends Widget
                 }
             } else {
                 $worksheet = $sheet->getActiveSheet();
-                $this->executeColumns($this->models,isset($this->columns) ? $this->populateColumns($this->columns) : [], $this->headers ?? [],$worksheet  );
+                $this->_lastRow = $this->writeTitleRows($this->titleRows, 1, $this->getTitleStartRow(), $worksheet);
+                $this->executeColumns($this->models, isset($this->columns) ? $this->populateColumns($this->columns) : [], $this->headers ?? [], $worksheet);
             }
 
             if ($this->asAttachment) {
@@ -884,6 +921,26 @@ class Excel extends Widget
 
         }
         return '';
+    }
+
+    /**
+     * @param array $rows
+     * @param Worksheet $activeSheet
+     * @return int last title row
+     * @throws \PhpOffice\PhpSpreadsheet\Exception
+     */
+    public function writeTitleRows(array $rows, int $x, int $y, &$activeSheet): int
+    {
+        if (!$rows) {
+            return 0;
+        }
+        $lde = new LoadDataInExcel($activeSheet, $x, $y);
+        $lde->classStyle = $this->loadDataInExcelStyle;
+        foreach ($rows as $row) {
+            $lde->fillRow($row);
+            $lde->tn->newLine();
+        }
+        return $lde->tn->y;
     }
 
     /**
@@ -979,6 +1036,5 @@ class Excel extends Widget
         }
 
         return parent::widget($config);
-
     }
 }

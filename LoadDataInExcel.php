@@ -1,6 +1,7 @@
 <?php
 namespace moonland\phpexcel;
 
+use PhpOffice\PhpSpreadsheet\Exception;
 use PhpOffice\PhpSpreadsheet\Style\Alignment;
 use PhpOffice\PhpSpreadsheet\Style\Fill;
 use PhpOffice\PhpSpreadsheet\Style\NumberFormat;
@@ -52,6 +53,10 @@ class LoadDataInExcel
         ],
     ];
 
+    /**
+     * @param string $tableTitle
+     * @throws Exception
+     */
     public function setTableTitle(string $tableTitle): void
     {
         $this
@@ -79,17 +84,21 @@ class LoadDataInExcel
 
     /**
      * @param TableTdCell $cell
-     * @throws \PhpOffice\PhpSpreadsheet\Exception
+     * @throws Exception
      */
     public function fillCell($cell): void
     {
+        if (!$cell) {
+            return;
+        }
         if ($cell->colspan !== 1) {
             $this->tn->setColspan($cell->colspan);
             $this->sheet->mergeCellsByColumnAndRow(
                 $this->tn->x,
                 $this->tn->y,
                 $this->tn->x + $cell->colspan - 1,
-                $this->tn->y);
+                $this->tn->y
+            );
         }
         if ($cell->rowspan !== 1) {
             $this->tn->setRowspan($cell->rowspan);
@@ -160,7 +169,7 @@ class LoadDataInExcel
 
     /**
      * @param TableTdCell[] $row
-     * @throws \PhpOffice\PhpSpreadsheet\Exception
+     * @throws Exception
      */
     public function fillRow(array &$row): void
     {
@@ -172,8 +181,7 @@ class LoadDataInExcel
         reset($row);
         /** @var TableTdCell $cell */
         foreach ($row as $cellKey => $cell) {
-
-            if($cell) {
+            if ($cell) {
                 $this->fillCell($cell);
             }
 
