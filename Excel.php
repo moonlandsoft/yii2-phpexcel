@@ -376,7 +376,7 @@ class Excel extends Widget
     public function init()
     {
         parent::init();
-        if ($this->formatter == null) {
+        if ($this->formatter === null) {
             $this->formatter = Yii::$app->getFormatter();
         } elseif (is_array($this->formatter)) {
             $this->formatter = Yii::createObject($this->formatter);
@@ -394,7 +394,7 @@ class Excel extends Widget
         }
     }
 
-    public function getTitleStartRow()
+    public function getTitleStartRow(): int
     {
         if ($this->titleStartRow === null) {
             $this->titleStartRow = 1;
@@ -645,7 +645,7 @@ class Excel extends Widget
                     /**
                      * if date without time, add 00:00:00 as time
                      */
-                    if (strlen($value)=== '10') {
+                    if (strlen($value)=== 10) {
                         $value .= ' 00:00:00';
                     }
                     if (!$dateTime = DateTime::createFromFormat('Y-m-d H:i:s', $value, new DateTimeZone('UTC'))) {
@@ -925,6 +925,8 @@ class Excel extends Widget
 
     /**
      * @param array $rows
+     * @param int $x
+     * @param int $y
      * @param Worksheet $activeSheet
      * @return int last title row
      * @throws \PhpOffice\PhpSpreadsheet\Exception
@@ -992,6 +994,7 @@ class Excel extends Widget
      *
      * @param array $config
      * @return string
+     * @throws InvalidConfigException
      */
     public static function export($config = []): string
     {
@@ -1011,6 +1014,7 @@ class Excel extends Widget
      * @param string!array $fileName to load.
      * @param array $config is a more configuration.
      * @return string
+     * @throws InvalidConfigException
      */
     public static function import($fileName, $config = []): string
     {
