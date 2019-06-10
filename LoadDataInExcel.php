@@ -181,9 +181,11 @@ class LoadDataInExcel
         reset($row);
         /** @var TableTdCell $cell */
         foreach ($row as $cellKey => $cell) {
-            if ($cell) {
-                $this->fillCell($cell);
+            if ($cell === null) {
+                continue;
             }
+            $this->fillCell($cell);
+
 
             if ($cellKey !== $lastKey) {
                 $this->tn->nextCell();
