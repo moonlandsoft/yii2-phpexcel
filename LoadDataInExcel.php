@@ -161,7 +161,12 @@ class LoadDataInExcel
             $classStyle = array_merge(...$classStyle);
             $this
                 ->sheet
-                ->getStyleByColumnAndRow($this->tn->x, $this->tn->y)
+                ->getStyleByColumnAndRow(
+                    $this->tn->x,
+                    $this->tn->y,
+                    $this->tn->x + $cell->colspan - 1,
+                    $this->tn->y + $cell->rowspan - 1
+                    )
                 ->applyFromArray($classStyle);
         }
 
