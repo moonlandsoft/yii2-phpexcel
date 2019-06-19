@@ -97,7 +97,7 @@ class LoadDataInExcel
                 $this->tn->x,
                 $this->tn->y,
                 $this->tn->x + $cell->colspan - 1,
-                $this->tn->y
+                $this->tn->y + $cell->rowspan - 1
             );
         }
         if ($cell->rowspan !== 1) {
@@ -105,7 +105,7 @@ class LoadDataInExcel
             $this->sheet->mergeCellsByColumnAndRow(
                 $this->tn->x,
                 $this->tn->y,
-                $this->tn->x,
+                $this->tn->x + $cell->colspan - 1,
                 $this->tn->y + $cell->rowspan - 1
             );
         }
