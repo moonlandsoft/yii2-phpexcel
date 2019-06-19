@@ -119,7 +119,7 @@ class LoadDataInExcel
             if ($cell->numberDecimals === 0) {
                 $numberFormat = NumberFormat::FORMAT_NUMBER;
             } else {
-                $numberFormat = '0.' . str_repeat('0', $cell->numberDecimals);
+                $numberFormat = '#,##0.' . str_repeat('0', $cell->numberDecimals);
             }
             $this
                 ->sheet
