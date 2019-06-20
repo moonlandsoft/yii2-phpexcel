@@ -11,6 +11,7 @@ use PhpOffice\PhpSpreadsheet\Style\Alignment;
 use PhpOffice\PhpSpreadsheet\Style\Border;
 use PhpOffice\PhpSpreadsheet\Style\Fill;
 use PhpOffice\PhpSpreadsheet\Style\NumberFormat;
+use PhpOffice\PhpSpreadsheet\Worksheet\PageSetup;
 use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 use Yii;
 use yii\base\Model;
@@ -351,6 +352,14 @@ class Excel extends Widget
             'color' => ['rgb' => '7ebf00' ]
         ],
     ];
+
+    public $bodyStyle = [
+        'borders' => [
+            'allBorders' => [
+                'borderStyle' => Border::BORDER_THIN,
+            ],
+        ],
+    ];
     /**
      * (non-PHPdoc)
      * @see \yii\base\Object::init()
@@ -372,6 +381,10 @@ class Excel extends Widget
     /** @var array  */
     public $loadDataInExcelStyle = [];
 
+
+    /** @var bool  */
+    public $pageOrientationPortrait = true;
+    public $pageFitToPage = false;
 
     public function init()
     {
@@ -502,6 +515,7 @@ class Excel extends Widget
             $isPlus = false;
             $colplus = 0;
             $colnum = 1;
+            $firstCol = null;
             foreach ($columns as $key => $column) {
                 $col = '';
                 if ($colnum > $char) {
@@ -513,6 +527,9 @@ class Excel extends Widget
                     $col .= chr(64 + $colplus);
                 }
                 $col .= chr(64 + $colnum);
+                if(!$firstCol){
+                    $firstCol = $col;
+                }
                 if (is_array($column)) {
                     $column_value = $this->executeGetColumnData($model, $column);
                 } else {
@@ -562,6 +579,11 @@ class Excel extends Widget
                 }
 
                 $colnum++;
+            }
+            if ($this->bodyStyle) {
+                $activeSheet
+                    ->getStyle($firstCol . $row . ':' . $col . $row)
+                    ->applyFromArray($this->bodyStyle);
             }
             $row++;
             $this->_lastRow ++;
@@ -863,6 +885,21 @@ class Excel extends Widget
     }
 
 
+    /**
+     * @param Worksheet $worksheet
+     */
+    private function setPageSettings(&$worksheet): void
+    {
+        if($this->pageOrientationPortrait) {
+            $worksheet->getPageSetup()->setOrientation(PageSetup::ORIENTATION_PORTRAIT);
+        }else{
+            $worksheet->getPageSetup()->setOrientation(PageSetup::ORIENTATION_LANDSCAPE);
+        }
+
+        if($this->pageFitToPage){
+            $worksheet->getPageSetup()->setFitToPage(true);
+        }
+    }
 
     /**
      * @see \yii\base\Widget::run()
@@ -892,6 +929,7 @@ class Excel extends Widget
                     $sheet->createSheet($index);
                     $sheet->getSheet($index)->setTitle($title);
                     $worksheet[$index] = $sheet->getSheet($index);
+                    $this->setPageSettings($worksheet[$index]);
                     $columns = $this->columns[$title] ?? [];
                     $headers = $this->headers[$title] ?? [];
                     $this->executeColumns($models, $this->populateColumns($columns), $headers, $worksheet[$index]);
@@ -899,6 +937,7 @@ class Excel extends Widget
                 }
             } else {
                 $worksheet = $sheet->getActiveSheet();
+                $this->setPageSettings($worksheet);
                 $this->_lastRow = $this->writeTitleRows($this->titleRows, 1, $this->getTitleStartRow(), $worksheet);
                 $this->executeColumns($this->models, isset($this->columns) ? $this->populateColumns($this->columns) : [], $this->headers ?? [], $worksheet);
             }
