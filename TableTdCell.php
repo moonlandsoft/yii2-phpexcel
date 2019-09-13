@@ -3,6 +3,7 @@
 namespace moonland\phpexcel;
 
 
+use eaBlankonThema\widget\ThButtonDropDown;
 use yii\helpers\Html;
 
 class TableTdCell
@@ -13,10 +14,13 @@ class TableTdCell
     public $rowspan;
     public $class = [];
     public $nowrap = false;
-    public $url = [];
+    public $url;
     public $urlOptions = [];
     public $numberDecimals = false;
     public $columnAutoSize = true;
+
+    /** @var array label list with urls for ThButtonDropDown*/
+    public $dropDownItems = [];
 
     /** @var string */
     public $tooltipText;
@@ -53,6 +57,19 @@ class TableTdCell
 
     public function getValue(): string
     {
+        if(count($this->dropDownItems) === 1){
+            $this->url = array_values($this->dropDownItems)[0]['url'];
+            $this->dropDownItems = [];
+        }
+        if($this->dropDownItems){
+            return ThButtonDropDown::widget([
+                'label' => $this->value,
+                'items' => $this->dropDownItems
+            ]);
+        }
+        if($this->url) {
+            return Html::a($this->value, $this->url, $this->urlOptions);
+        }
         if ($this->numberDecimals !== false) {
             return number_format(round($this->value, $this->numberDecimals), $this->numberDecimals, '.', '');
         }
@@ -83,12 +100,8 @@ class TableTdCell
             $options['data-original-title'] = '';
         }
 
-        if(!$this->url) {
-            return Html::tag($this->tag, $this->getValue(), $options);
-        }
+        return Html::tag($this->tag, $this->getValue(), $options);
 
-        return Html::tag($this->tag, Html::a($this->getValue(), $this->url, $this->urlOptions), $options);
     }
-
 
 }
