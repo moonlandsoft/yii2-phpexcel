@@ -434,6 +434,22 @@ class Excel extends \yii\base\Widget
 	 * @var custom CSV encoding for import. Works only with CSV files
 	 */
 	public $CSVEncoding = "UTF-8";
+
+    /**
+     * Read data only?
+     * Identifies whether the Reader should only read data values for cells, and ignore any formatting information;
+     *        or whether it should read both data and formatting.
+     *
+     * @var bool
+     */
+    public $readDataOnly = false;
+
+    /**
+     * Active frist sheet index？
+     * No longer distinguish sheet names, read the front position by default, read only one sheet
+     * @var int
+     */
+    public $activeSheetOnly = false;
   
 	/**
 	 * (non-PHPdoc)
@@ -742,13 +758,16 @@ class Excel extends \yii\base\Widget
 			$objectreader->setDelimiter($this->CSVDelimiter);
 			$objectreader->setInputEncoding($this->CSVEncoding);
 		}
+        if ($this->readDataOnly) {
+            $objectreader->setReadDataOnly($this->readDataOnly);
+        }
 		$objectPhpExcel = $objectreader->load($fileName);
 
 		$sheetCount = $objectPhpExcel->getSheetCount();
 
 		$sheetDatas = [];
 
-		if ($sheetCount > 1) {
+		if (!$this->activeSheetOnly && $sheetCount > 1) {
 			foreach ($objectPhpExcel->getSheetNames() as $sheetIndex => $sheetName) {
 				if (isset($this->getOnlySheet) && $this->getOnlySheet != null) {
 					if(!$objectPhpExcel->getSheetByName($this->getOnlySheet)) {
