@@ -55,6 +55,14 @@ class TableTdCell
         return $this->params[$name] ?? false;
     }
 
+    public function getValueForExcel(): string
+    {
+        if ($this->numberDecimals !== false) {
+            return number_format(round($this->value, $this->numberDecimals), $this->numberDecimals, '.', '');
+        }
+        return $this->value;
+    }
+
     public function getValue(): string
     {
         if(count($this->dropDownItems) === 1){

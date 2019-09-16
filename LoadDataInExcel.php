@@ -135,7 +135,7 @@ class LoadDataInExcel
 
         $this
             ->sheet
-            ->setCellValueByColumnAndRow($this->tn->x, $this->tn->y, $cell->getValue());
+            ->setCellValueByColumnAndRow($this->tn->x, $this->tn->y, $cell->getValueForExcel());
 
         if ($cell->columnAutoSize) {
             $this
