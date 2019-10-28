@@ -378,6 +378,9 @@ class Excel extends Widget
     /** @var array array[] */
     public $titleRows = [];
 
+    /** @var array array[] */
+    public $footerRows = [];
+
     /** @var array  */
     public $loadDataInExcelStyle = [];
 
@@ -415,12 +418,17 @@ class Excel extends Widget
         return $this->titleStartRow;
     }
 
-    public function getTableStartRow(): int
+    public function getStartRow(): int
     {
         if ($this->tableStartRow === null) {
             $this->tableStartRow = $this->_lastRow + 1;
         }
         return $this->tableStartRow;
+    }
+
+    public function getNextRow(): int
+    {
+        return $this->_lastRow + 1;
     }
 
     /**
@@ -447,7 +455,7 @@ class Excel extends Widget
             }
         }
         $hasHeader = false;
-        $row = $this->getTableStartRow();
+        $row = $this->getStartRow();
         $char = 26;
         while( ( $model = array_shift( $models ) ) !== null ){
             if (empty($columns)) {
@@ -938,8 +946,9 @@ class Excel extends Widget
             } else {
                 $worksheet = $sheet->getActiveSheet();
                 $this->setPageSettings($worksheet);
-                $this->_lastRow = $this->writeTitleRows($this->titleRows, 1, $this->getTitleStartRow(), $worksheet);
+                $this->_lastRow = $this->writeRows($this->titleRows, 1, $this->getTitleStartRow(), $worksheet);
                 $this->executeColumns($this->models, isset($this->columns) ? $this->populateColumns($this->columns) : [], $this->headers ?? [], $worksheet);
+                $this->_lastRow = $this->writeRows($this->footerRows, 1, $this->getNextRow(), $worksheet);
             }
 
             if ($this->asAttachment) {
@@ -970,12 +979,13 @@ class Excel extends Widget
      * @return int last title row
      * @throws \PhpOffice\PhpSpreadsheet\Exception
      */
-    public function writeTitleRows(array $rows, int $x, int $y, &$activeSheet): int
+    public function writeRows(array $rows, int $x, int $y, &$activeSheet): int
     {
         if (!$rows) {
             return 0;
         }
         $lde = new LoadDataInExcel($activeSheet, $x, $y);
+        $lde->tn->y = $y;
         $lde->classStyle = $this->loadDataInExcelStyle;
         foreach ($rows as $row) {
             $lde->fillRow($row);
