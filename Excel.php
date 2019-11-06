@@ -2,8 +2,10 @@
 
 namespace moonland\phpexcel;
 
+use arogachev\excel\helpers\PHPExcelHelper;
 use DateTime;
 use DateTimeZone;
+use PhpOffice\PhpSpreadsheet\Cell\DataType;
 use PhpOffice\PhpSpreadsheet\Reader\Exception;
 use PhpOffice\PhpSpreadsheet\Shared\Date;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
@@ -559,6 +561,12 @@ class Excel extends Widget
                                 ->setFormatCode($this->dateFormat);
                             break;
                         case 'text':
+                            if (is_string($column_value) && $column_value[0] === '0') {
+                                $activeSheet
+                                    ->getCell($col . $row)
+                                    ->setValueExplicit($column_value, DataType::TYPE_STRING);
+                                break;
+                            }
                             $activeSheet
                                 ->getStyle($col . $row)
                                 ->getNumberFormat()
