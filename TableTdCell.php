@@ -3,6 +3,7 @@
 namespace moonland\phpexcel;
 
 
+use Closure;
 use eaBlankonThema\widget\ThButtonDropDown;
 use yii\helpers\Html;
 
@@ -18,6 +19,7 @@ class TableTdCell
     public $urlOptions = [];
     public $numberDecimals = false;
     public $columnAutoSize = true;
+    public $horizontalAlign;
 
     /** @var array label list with urls for ThButtonDropDown*/
     public $dropDownItems = [];
@@ -31,12 +33,12 @@ class TableTdCell
 
     /**
      * TableCell constructor.
-     * @param string $value *
+     * @param string|Closure $value *
      * @param array $class
      * @param $colspan
      * @param $rowspan
      */
-    public function __construct(string $value = '', array $class = [], $colspan = 1, $rowspan = 1)
+    public function __construct($value = '', array $class = [], $colspan = 1, $rowspan = 1)
     {
         $this->value = $value;
         $this->colspan = $colspan;
@@ -55,12 +57,15 @@ class TableTdCell
         return $this->params[$name] ?? false;
     }
 
-    public function getValueForExcel(): string
+    public function getValueForExcel(int $x, int $y): string
     {
-        if ($this->numberDecimals !== false) {
-            return number_format(round($this->value, $this->numberDecimals), $this->numberDecimals, '.', '');
+        if(is_string($this->value)) {
+            if ($this->numberDecimals !== false) {
+                return number_format(round($this->value, $this->numberDecimals), $this->numberDecimals, '.', '');
+            }
+            return $this->value;
         }
-        return $this->value;
+        return call_user_func($this->value, $x, $y);
     }
 
     public function getValue(): string

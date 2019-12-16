@@ -3,8 +3,9 @@
 namespace moonland\phpexcel;
 
 use Closure;
+use PhpOffice\PhpSpreadsheet\Style\Alignment;
 
-class TableThCell extends TableTdCell {
+class TableDecimalCell extends TableTdCell {
 
     /**
      * TableThCell constructor.
@@ -16,7 +17,8 @@ class TableThCell extends TableTdCell {
     public function __construct($value = '', array $class = [], int $colspan = 1, int $rowspan = 1)
     {
         parent::__construct($value, $class, $colspan, $rowspan);
-        $this->tag = 'th';
+        $this->numberDecimals = 2;
+        $this->horizontalAlign = Alignment::HORIZONTAL_RIGHT;
     }
 
 

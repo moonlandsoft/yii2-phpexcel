@@ -128,14 +128,14 @@ class LoadDataInExcel
                 ->setFormatCode($numberFormat);
             $classStyle[] = [
                 'alignment' => [
-                    'horizontal' => Alignment::HORIZONTAL_CENTER,
+                    'horizontal' => $cell->horizontalAlign?:Alignment::HORIZONTAL_CENTER,
                 ],
             ];
         }
 
         $this
             ->sheet
-            ->setCellValueByColumnAndRow($this->tn->x, $this->tn->y, $cell->getValueForExcel());
+            ->setCellValueByColumnAndRow($this->tn->x, $this->tn->y, $cell->getValueForExcel($this->tn->x, $this->tn->y));
 
         if ($cell->columnAutoSize) {
             $this
@@ -186,11 +186,9 @@ class LoadDataInExcel
         reset($row);
         /** @var TableTdCell $cell */
         foreach ($row as $cellKey => $cell) {
-            if ($cell === null) {
-                continue;
+            if ($cell !== null) {
+                $this->fillCell($cell);
             }
-            $this->fillCell($cell);
-
 
             if ($cellKey !== $lastKey) {
                 $this->tn->nextCell();
