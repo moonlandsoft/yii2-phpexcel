@@ -59,13 +59,17 @@ class TableTdCell
 
     public function getValueForExcel(int $x, int $y): string
     {
-        if(is_string($this->value)) {
-            if ($this->numberDecimals !== false) {
-                return number_format(round($this->value, $this->numberDecimals), $this->numberDecimals, '.', '');
-            }
-            return $this->value;
+
+        if($this->value instanceof Closure) {
+            return call_user_func($this->value, $x, $y);
         }
-        return call_user_func($this->value, $x, $y);
+
+        if ($this->numberDecimals !== false) {
+            return number_format(round($this->value, $this->numberDecimals), $this->numberDecimals, '.', '');
+        }
+        return $this->value;
+
+
     }
 
     public function getValue(): string
