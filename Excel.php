@@ -110,6 +110,12 @@ use PhpOffice\PhpSpreadsheet\IOFactory;
  *            [
  *                    'attribute' => 'content',
  *                    'header' => 'Content Post',
+ *                    'headerStyle' => [
+ *                        'font' => [
+ *                          'bold' => true,
+ *                          'color' => array('rgb' => 'FFFDFE' )
+ *                        ],
+ *                     ],
  *                    'format' => 'text',
  *                    'autoSize' => true,
  *                    'value' => function($model) {
@@ -468,6 +474,7 @@ class Excel extends Widget
                 $colplus = 0;
                 $colnum = 1;
                 $col = '';
+                $headerStyleColums = [];
                 foreach ($columns as $key => $column) {
                     $col = '';
                     if ($colnum > $char) {
@@ -480,6 +487,12 @@ class Excel extends Widget
                     }
                     $col .= chr(64 + $colnum);
                     $header = '';
+                    if(isset($column['headerStyle'])){
+                        $headerStyleColums[] = [
+                            'headerStyle' => $column['headerStyle'],
+                            'colrow' => $col.$row
+                        ];
+                    }
                     if (is_array($column)) {
                         if (isset($column['header'])) {
                             $header = $column['header'];
@@ -511,6 +524,11 @@ class Excel extends Widget
                     $activeSheet
                         ->getStyle('A' . $row . ':' . $col . $row)
                         ->applyFromArray($this->headerStyle);
+                }
+                foreach ($headerStyleColums as $column) {
+                    $activeSheet
+                        ->getStyle($column['colrow'])
+                        ->applyFromArray($column['headerStyle']);
                 }
                 if ($this->freezeHeader) {
                     $activeSheet->freezePaneByColumnAndRow(1, 2);
