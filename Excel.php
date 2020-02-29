@@ -2,7 +2,6 @@
 
 namespace moonland\phpexcel;
 
-use arogachev\excel\helpers\PHPExcelHelper;
 use DateTime;
 use DateTimeZone;
 use PhpOffice\PhpSpreadsheet\Cell\DataType;
@@ -345,10 +344,11 @@ class Excel extends Widget
     public $headerStyle = [
         'font' => [
             'bold' => true,
-            'color' => array('rgb' => 'FFFDFE' )
+            'color' => ['rgb' => 'FFFDFE' ]
         ],
         'alignment' => [
             'horizontal' => Alignment::HORIZONTAL_CENTER,
+            'vertical' => Alignment::VERTICAL_JUSTIFY
         ],
         'borders' => [
             'top' => [
@@ -360,6 +360,9 @@ class Excel extends Widget
             'color' => ['rgb' => '7ebf00' ]
         ],
     ];
+
+    /** @var int */
+    public $headerHeight;
 
     public $bodyStyle = [
         'borders' => [
@@ -531,10 +534,13 @@ class Excel extends Widget
                         ->applyFromArray($column['headerStyle']);
                 }
                 if ($this->freezeHeader) {
-                    $activeSheet->freezePaneByColumnAndRow(1, 2);
+                    $activeSheet->freezePaneByColumnAndRow(1, $row + 1);
                 }
                 if ($this->autoFilter) {
                     $activeSheet->setAutoFilter('A' . $row . ':' . $col . $row);
+                }
+                if($this->headerHeight){
+                    $activeSheet->getRowDimension($row)->setRowHeight($this->headerHeight);
                 }
                 $hasHeader = true;
                 $row++;
@@ -579,7 +585,7 @@ class Excel extends Widget
                                 ->setFormatCode($this->dateFormat);
                             break;
                         case 'text':
-                            if (is_string($column_value) && $column_value[0] === '0') {
+                            if (is_string($column_value) && strpos($column_value, '0') === 0) {
                                 $activeSheet
                                     ->getCell($col . $row)
                                     ->setValueExplicit($column_value, DataType::TYPE_STRING);
