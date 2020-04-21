@@ -565,9 +565,9 @@ class Excel extends Widget
                     $firstCol = $col;
                 }
                 if (is_array($column)) {
-                    $column_value = $this->executeGetColumnData($model, $column);
+                    $column_value = $this->executeGetColumnData($model, $row, $column);
                 } else {
-                    $column_value = $this->executeGetColumnData($model, ['attribute' => $column]);
+                    $column_value = $this->executeGetColumnData($model, $row, ['attribute' => $column]);
                 }
                 if (isset($column['format'])) {
                     $formatOptions = [];
@@ -681,14 +681,14 @@ class Excel extends Widget
     }
 
     /**
-     * Getting column value. 
+     * Getting column value.
      *
      * @param $model
+     * @param int $row
      * @param array $params
      * @return bool|float|mixed|string|null
-     * @throws \Exception
      */
-    public function executeGetColumnData($model, $params = [])
+    public function executeGetColumnData($model,int $row ,array $params = [])
     {
         $value = null;
         try {
@@ -696,7 +696,7 @@ class Excel extends Widget
                 if (is_string($params['value'])) {
                     $value = ArrayHelper::getValue($model, $params['value']);
                 } else {
-                    $value = call_user_func($params['value'], $model, $this);
+                    $value = call_user_func($params['value'], $model, $this, $row);
                 }
             } elseif (isset($params['attribute']) && $params['attribute'] !== null) {
                 $value = ArrayHelper::getValue($model, $params['attribute']);
