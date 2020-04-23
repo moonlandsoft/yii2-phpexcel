@@ -514,13 +514,13 @@ class Excel extends Widget
                     } elseif (!isset($column['autoSize']) || $column['autoSize']) {
                         $activeSheet->getColumnDimension($col)->setAutoSize(true);
                     }
-                    if (isset($column['excelWrap'])) {
+                    //if (isset($column['excelWrap'])) {
                         $activeSheet
                             ->getStyle($col . $row)
                             ->getAlignment()
-                            ->setWrapText($column['excelWrap'])
+                            ->setWrapText(true)
                         ;
-                    }
+                    //}
                     $colnum ++;
                 }
                 if ($this->headerStyle) {
