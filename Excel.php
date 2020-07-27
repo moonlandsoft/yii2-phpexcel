@@ -698,6 +698,12 @@ class Excel extends Widget
                 } else {
                     $value = call_user_func($params['value'], $model, $this, $row);
                 }
+            } elseif (isset($params['list']) && is_array($params['list'])) {
+                if($value = ArrayHelper::getValue($model, $params['attribute'])) {
+                    $value = $params['list'][$value] ?? $value . '!';
+                }else{
+                    $value = '';
+                }
             } elseif (isset($params['attribute']) && $params['attribute'] !== null) {
                 $value = ArrayHelper::getValue($model, $params['attribute']);
             }
