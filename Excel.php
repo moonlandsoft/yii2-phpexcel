@@ -699,7 +699,8 @@ class Excel extends Widget
                     $value = call_user_func($params['value'], $model, $this, $row);
                 }
             } elseif (isset($params['list']) && is_array($params['list'])) {
-                if($value = ArrayHelper::getValue($model, $params['attribute'])) {
+                $value = ArrayHelper::getValue($model, $params['attribute']);
+                if($value !== null && $value !== ''){
                     $value = $params['list'][$value] ?? $value . '!';
                 }else{
                     $value = '';
