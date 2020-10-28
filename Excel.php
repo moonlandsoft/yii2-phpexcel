@@ -335,6 +335,7 @@ class Excel extends Widget
      * @var string format in excel style
      */
     public $dateFormat  = 'dd/mm/yy';
+    public $dateTimeFormat  = 'd/m/yy h:mm';
     /**
      * @var bool freeze header rows
      */
@@ -583,6 +584,15 @@ class Excel extends Widget
                                 ->getStyle($col . $row)
                                 ->getNumberFormat()
                                 ->setFormatCode($this->dateFormat);
+                            break;
+                        case 'date-time':
+                            if($date = DateTime::createFromFormat('Y-m-d H:i:s',$column_value)) {
+                                $column_value = Date::PHPToExcel($date->getTimestamp());
+                                $activeSheet
+                                    ->getStyle($col . $row)
+                                    ->getNumberFormat()
+                                    ->setFormatCode($this->dateTimeFormat);
+                            }
                             break;
                         case 'text':
                             if (is_string($column_value) && strpos($column_value, '0') === 0) {
