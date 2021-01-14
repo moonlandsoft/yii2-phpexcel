@@ -720,6 +720,9 @@ class Excel extends Widget
             }
 
             if (isset($params['format'])) {
+                if ($params['format'] == 'date-time') {
+                    return $value;
+                }
                 if ($params['format'] === 'date' || ($params['format'][0] ?? '') === 'date') {
                     /**
                      * if date without time, add 00:00:00 as time
