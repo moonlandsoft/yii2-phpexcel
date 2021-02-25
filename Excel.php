@@ -20,6 +20,7 @@ use yii\base\Widget;
 use yii\helpers\ArrayHelper;
 use yii\base\InvalidConfigException;
 use yii\base\InvalidArgumentException;
+use yii\helpers\VarDumper;
 use yii\i18n\Formatter;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 
@@ -724,6 +725,9 @@ class Excel extends Widget
                     return $value;
                 }
                 if ($params['format'] === 'date' || ($params['format'][0] ?? '') === 'date') {
+                    if($value === '0000-00-00'){
+                        $value = '';
+                    }
                     /**
                      * if date without time, add 00:00:00 as time
                      */
@@ -741,6 +745,16 @@ class Excel extends Widget
             }
         }catch (\Exception $exception) {
             Yii::error('Exception:' . $exception->getMessage());
+            if(is_object($model)) {
+                Yii::error('$model: ' . VarDumper::dumpAsString($model->attributes));
+            }else{
+                Yii::error('$model: ' . VarDumper::dumpAsString($model));
+            }
+            Yii::error('$row: ' . $row);
+            if($params){
+                Yii::error('$params: ' . VarDumper::dumpAsString($params));
+            }
+            Yii::error($exception->getTraceAsString());
             return '???';
         }
         return $value;
