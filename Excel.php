@@ -587,7 +587,7 @@ class Excel extends Widget
                                 ->setFormatCode($this->dateFormat);
                             break;
                         case 'date-time':
-                            if($date = DateTime::createFromFormat('Y-m-d H:i:s',$column_value)) {
+                            if($date = DateTime::createFromFormat('Y-m-d H:i:s',$column_value,new DateTimeZone('UTC'))) {
                                 $column_value = Date::PHPToExcel($date->getTimestamp());
                                 $activeSheet
                                     ->getStyle($col . $row)
