@@ -883,6 +883,9 @@ class Excel extends Widget
             $path = $this->savePath . '/' . $this->getFileName();
         }
         $objectWriter->save($path);
+        if ($this->asAttachment) {
+            exit();
+        }
     }
 
     /**
