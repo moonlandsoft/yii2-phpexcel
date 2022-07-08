@@ -455,7 +455,7 @@ class Excel extends \yii\base\Widget
 	/**
 	 * Setting data from models
 	 */
-	public function executeColumns(&$activeSheet = null, $models, $columns = [], $headers = [])
+	public function executeColumns($models, &$activeSheet = null,  $columns = [], $headers = [])
 	{
 		if ($activeSheet == null) {
 			$activeSheet = $this->activeSheet;
@@ -825,12 +825,12 @@ class Excel extends \yii\base\Widget
         	    			$worksheet[$index] = $sheet->getSheet($index);
         	    			$columns = isset($this->columns[$title]) ? $this->columns[$title] : [];
         	    			$headers = isset($this->headers[$title]) ? $this->headers[$title] : [];
-        	    			$this->executeColumns($worksheet[$index], $models, $this->populateColumns($columns), $headers);
+        	    			$this->executeColumns($models,$worksheet[$index], $this->populateColumns($columns), $headers);
         	    			$index++;
         	    		}
         	    	} else {
         	    		$worksheet = $sheet->getActiveSheet();
-        	    		$this->executeColumns($worksheet, $this->models, isset($this->columns) ? $this->populateColumns($this->columns) : [], isset($this->headers) ? $this->headers : []);
+        	    		$this->executeColumns($this->models,$worksheet, isset($this->columns) ? $this->populateColumns($this->columns) : [], isset($this->headers) ? $this->headers : []);
         	    	}
         	    	
         	    	if ($this->asAttachment) {
