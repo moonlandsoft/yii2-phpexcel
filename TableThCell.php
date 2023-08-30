@@ -6,6 +6,7 @@ use Closure;
 
 class TableThCell extends TableTdCell {
 
+    public $grupa;
     /**
      * TableThCell constructor.
      * @param string|Closure $value

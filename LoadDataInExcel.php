@@ -45,7 +45,7 @@ class LoadDataInExcel
             'bold' => true
         ],
         'alignment' => [
-            'horizontal' => Alignment::HORIZONTAL_CENTER,
+            'horizontal' => Alignment::HORIZONTAL_CENTER
         ],
         'fill' => [
             'fillType' => Fill::FILL_SOLID,
@@ -113,7 +113,11 @@ class LoadDataInExcel
         $classStyle = [];
 
         if ($cell->tag === 'th') {
-            $classStyle[] = $this->thStyle;
+            $style = $this->thStyle;
+            if (!$cell->nowrap) {
+                $style['alignment']['wrapText'] = true;
+            }
+            $classStyle[] = $style;
         }
         if ($cell->numberDecimals !== false) {
             if ($cell->numberDecimals === 0) {
