@@ -12,6 +12,8 @@ class LoadDataInExcel
     /** @var TableNavigator */
     public $tn;
 
+    public $colunWidth = [];
+
     public $styleTitle = [
         'font' => [
             'bold' => true,
@@ -45,7 +47,8 @@ class LoadDataInExcel
             'bold' => true
         ],
         'alignment' => [
-            'horizontal' => Alignment::HORIZONTAL_CENTER
+            'horizontal' => Alignment::HORIZONTAL_CENTER,
+            'vertical' => Alignment::VERTICAL_TOP
         ],
         'fill' => [
             'fillType' => Fill::FILL_SOLID,
@@ -139,15 +142,15 @@ class LoadDataInExcel
 
         $this
             ->sheet
-            ->setCellValueByColumnAndRow($this->tn->x, $this->tn->y, $cell->getValueForExcel($this->tn->x, $this->tn->y));
+            ->setCellValueByColumnAndRow(
+                $this->tn->x,
+                $this->tn->y,
+                $cell->getValueForExcel($this->tn->x, $this->tn->y)
+            );
 
-        if ($cell->columnAutoSize) {
-            $this
-                ->sheet
-                ->getColumnDimensionByColumn($this->tn->y)
-                ->setAutoSize(true);
+        if ($cell->width) {
+            $this->colunWidth[$this->tn->x] = $cell->width;
         }
-
         if ($cell->class) {
             $cellClass = $cell->class;
             if (!is_array($cellClass)) {
@@ -170,10 +173,9 @@ class LoadDataInExcel
                     $this->tn->y,
                     $this->tn->x + $cell->colspan - 1,
                     $this->tn->y + $cell->rowspan - 1
-                    )
+                )
                 ->applyFromArray($classStyle);
         }
-
     }
 
     /**
@@ -193,11 +195,20 @@ class LoadDataInExcel
             if ($cell !== null) {
                 $this->fillCell($cell);
             }
-
             if ($cellKey !== $lastKey) {
                 $this->tn->nextCell();
             }
         }
     }
 
+    public function setColumnsWidths(): void
+    {
+        foreach ($this->colunWidth as $column => $size) {
+            $this
+                ->sheet
+                ->getColumnDimensionByColumn($column)
+                ->setAutoSize(false)
+                ->setWidth($size);
+        }
+    }
 }

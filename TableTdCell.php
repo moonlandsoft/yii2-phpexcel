@@ -20,6 +20,8 @@ class TableTdCell
     public $numberDecimals = false;
     public $columnAutoSize = true;
     public $horizontalAlign;
+    public $width;
+    public $grupa;
 
     /** @var array label list with urls for ThButtonDropDown*/
     public $dropDownItems = [];
@@ -116,9 +118,6 @@ class TableTdCell
             $options['data-container'] = 'body';
             $options['data-original-title'] = '';
         }
-
         return Html::tag($this->tag, $this->getValue(), $options);
-
     }
-
 }
